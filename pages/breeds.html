@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Породы — Cool Cat Kit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body data-page="breeds">
+  <main class="wrap">
+    <div class="section-head">
+      <h1>Породы котов</h1>
+    </div>
+    <p class="muted">Нажми на карточку, чтобы открыть подробности: история, характер, питание и здоровье.</p>
+
+    <section class="breed-grid" id="breedGrid"></section>
+  </main>
+
+  <!-- модальное окно с деталями породы -->
+  <div class="modal-backdrop" id="breedModal">
+    <div class="modal">
+      <button class="close" id="breedClose">&times;</button>
+      <div id="breedModalBody"></div>
+    </div>
+  </div>
+
+  <footer class="foot">данные пород — из набросков аналитика 🐾</footer>
+
+  <script src="../js/data.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/pages.js"></script>
+</body>
+</html>

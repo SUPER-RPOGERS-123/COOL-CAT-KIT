@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Профиль — Cool Cat Kit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body data-page="profile">
+  <main class="wrap">
+    <div class="section-head">
+      <h1>Профиль</h1>
+    </div>
+
+    <div class="card form-card card--tilt-r">
+      <span class="tape"></span>
+      <form id="profileForm">
+        <div class="avatar-edit">
+          <img id="avPreview" alt="avatar">
+          <label class="btn btn--ghost btn--sm">
+            📷 сменить фото
+            <input id="avFile" type="file" accept="image/*" hidden>
+          </label>
+        </div>
+        <div class="field"><label>Ваше имя</label><input id="pf-name" required></div>
+        <div class="field"><label>Кличка кота</label><input id="pf-cat"></div>
+        <div class="field"><label>Email</label><input id="pf-email" disabled></div>
+        <button class="btn btn--block" type="submit">Сохранить</button>
+      </form>
+      <div style="text-align:center;margin-top:16px">
+        <button class="btn btn--ghost btn--sm" id="logoutBtn">Выйти из аккаунта →</button>
+      </div>
+    </div>
+  </main>
+
+  <footer class="foot">это твой блокнот, храни его 🐾</footer>
+
+  <script src="../js/app.js"></script>
+  <script src="../js/pages.js"></script>
+</body>
+</html>

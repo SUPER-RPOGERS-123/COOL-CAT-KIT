@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Календарь — Cool Cat Kit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body data-page="calendar">
+  <main class="wrap">
+    <div class="section-head">
+      <h1>Календарь</h1>
+    </div>
+    <p class="muted">Нажми на любой день, чтобы добавить напоминание или заметку. Цветные точки — прививки 💉, лечение 🩺 и напоминания 🔔.</p>
+
+    <div class="cal-head">
+      <button class="btn btn--ghost btn--sm" id="calPrev">←</button>
+      <h2 id="calTitle"></h2>
+      <button class="btn btn--ghost btn--sm" id="calNext">→</button>
+    </div>
+
+    <section class="cal-grid" id="calGrid"></section>
+  </main>
+
+  <footer class="foot">не забудь про прививку вовремя 📅</footer>
+
+  <script src="../js/app.js"></script>
+  <script src="../js/pages.js"></script>
+</body>
+</html>

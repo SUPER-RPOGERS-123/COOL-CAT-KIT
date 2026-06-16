@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Медицина и прививки — Cool Cat Kit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body data-page="medical">
+  <main class="wrap">
+    <div class="section-head">
+      <h1>Медицина и прививки</h1>
+      <span class="spacer"></span>
+      <a class="btn btn--teal btn--sm" href="calendar.html">📅 В календарь</a>
+    </div>
+    <p class="muted">Это записи, а не календарь. У записи можно указать дату — тогда она появится в календаре.</p>
+
+    <div class="card card--tilt-r" style="margin:22px 0">
+      <span class="tape tape--blue"></span>
+      <h3>Новая запись</h3>
+      <form id="noteForm">
+        <div class="field">
+          <label>Тип</label>
+          <select name="kind">
+            <option value="vaccine">💉 Прививка</option>
+            <option value="med">🩺 Медицина / лечение</option>
+            <option value="note">📝 Просто заметка</option>
+          </select>
+        </div>
+        <div class="field"><label>Заголовок</label><input name="title" required placeholder="Прививка от бешенства"></div>
+        <div class="field"><label>Подробности</label><textarea name="body" placeholder="Клиника, врач, реакция, дозировка..."></textarea></div>
+        <div class="field"><label>Дата (опционально — для календаря)</label><input name="date" type="date"></div>
+        <button class="btn" type="submit">Сохранить запись</button>
+      </form>
+    </div>
+
+    <section class="notes-grid" id="notesList"></section>
+  </main>
+
+  <footer class="foot">здоровье кота под контролем 🩺</footer>
+
+  <script src="../js/app.js"></script>
+  <script src="../js/pages.js"></script>
+</body>
+</html>

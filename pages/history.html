@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>История кота — Cool Cat Kit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body data-page="history">
+  <main class="wrap">
+    <div class="section-head">
+      <h1>История вашего кота</h1>
+    </div>
+    <p class="muted">Лента моментов из жизни — как стена в инсте. Добавляй текст и фото.</p>
+
+    <div class="card card--tilt-l" style="max-width:640px;margin:22px auto">
+      <span class="clip"></span>
+      <h3>Новый момент</h3>
+      <form id="postForm">
+        <div class="field"><textarea name="text" placeholder="Сегодня впервые поймал лазерную точку... почти 🐾"></textarea></div>
+        <div class="field">
+          <label class="btn btn--ghost btn--sm" style="display:inline-flex">
+            📷 добавить фото
+            <input id="postImg" type="file" accept="image/*" hidden>
+          </label>
+          <span class="hand muted" id="postImgName" style="margin-left:8px"></span>
+        </div>
+        <button class="btn" type="submit">Опубликовать</button>
+      </form>
+    </div>
+
+    <section class="feed" id="feed"></section>
+  </main>
+
+  <footer class="foot">каждый день — отдельная страница 📖</footer>
+
+  <script src="../js/app.js"></script>
+  <script src="../js/pages.js"></script>
+</body>
+</html>
