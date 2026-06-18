@@ -164,8 +164,17 @@ h3 { font-size: 1.5rem; }
 .hero .sub { font-size: 1.25rem; color: var(--ink-soft); max-width: 620px; margin: 0 auto 24px; }
 .hero .doodle { font-family: var(--font-hand); color: var(--pen-red); font-size: 1.4rem; transform: rotate(-4deg); display: inline-block; }
 
+/* Группы разделов на главной: "Твой кот" (персональное) и "Справочник" (общее) */
+.cabinet-group { margin: 34px 0; }
+.group-head { display: flex; align-items: flex-end; gap: 16px; border-bottom: 2px dashed var(--sage-600); padding-bottom: 6px; margin-bottom: 6px; }
+.group-head h2 { margin: 0; }
+.group-head .muted { margin: 0 0 2px; font-size: .95rem; }
+.group-head-text { flex: 1; }
+.group-toggle { flex-shrink: 0; white-space: nowrap; }
+.cabinet-group.collapsed .tiles { display: none; }
+
 /* Сетка разделов на главной (dashboard) */
-.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 26px; margin: 34px 0; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 26px; margin: 18px 0 0; }
 .tile {
   display: flex; flex-direction: column; gap: 8px;
   text-decoration: none; color: var(--ink);

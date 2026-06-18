@@ -17,44 +17,62 @@
       <p class="doodle">↓ выбери раздел блокнота</p>
     </section>
 
-    <section class="tiles">
-      <a class="tile t-breeds" href="breeds.html">
-        <span class="emoji">🐈</span>
-        <h3>Породы</h3>
-        <p>Справочник пород: характер, питание, здоровье.</p>
-        <span class="go">открыть →</span>
-      </a>
-      <a class="tile t-medical" href="medical.html">
-        <span class="emoji">💉</span>
-        <h3>Медицина и прививки</h3>
-        <p>Записи о здоровье и прививках. Привязка к календарю.</p>
-        <span class="go">открыть →</span>
-      </a>
-      <a class="tile t-food" href="food.html">
-        <span class="emoji">🍗</span>
-        <h3>Советы по еде</h3>
-        <p>Подбор и сравнение кормов. Пока в разработке.</p>
-        <span class="go">открыть →</span>
-      </a>
-      <a class="tile t-calendar" href="calendar.html">
-        <span class="emoji">📅</span>
-        <h3>Календарь</h3>
-        <p>Напоминания и заметки по дням.</p>
-        <span class="go">открыть →</span>
-      </a>
-      <a class="tile t-history" href="history.html">
-        <span class="emoji">📖</span>
-        <h3>История вашего кота</h3>
-        <p>Лента моментов: текст и фотографии.</p>
-        <span class="go">открыть →</span>
-      </a>
-      <a class="tile t-memes" href="memes.html">
-        <span class="emoji">😹</span>
-        <h3>Мемы про котов</h3>
-        <p>Немного хорошего настроения. Опционально.</p>
-        <span class="go">открыть →</span>
-      </a>
-    </section>
+    <div class="cabinet-group">
+      <div class="group-head">
+        <h2>Твой кот</h2>
+        <p class="muted">Персональные разделы — здесь хранятся данные именно твоего кота.</p>
+      </div>
+      <section class="tiles">
+        <a class="tile t-medical" href="medical.html">
+          <span class="emoji">💉</span>
+          <h3>Медицина и прививки</h3>
+          <p>Записи о здоровье и прививках. Привязка к календарю.</p>
+          <span class="go">открыть →</span>
+        </a>
+        <a class="tile t-calendar" href="calendar.html">
+          <span class="emoji">📅</span>
+          <h3>Календарь</h3>
+          <p>Напоминания и заметки по дням.</p>
+          <span class="go">открыть →</span>
+        </a>
+        <a class="tile t-history" href="history.html">
+          <span class="emoji">📖</span>
+          <h3>История вашего кота</h3>
+          <p>Лента моментов: текст и фотографии.</p>
+          <span class="go">открыть →</span>
+        </a>
+      </section>
+    </div>
+
+    <div class="cabinet-group" id="refGroup">
+      <div class="group-head">
+        <div class="group-head-text">
+          <h2>Справочник</h2>
+          <p class="muted">Общая информация, одинаковая для всех — без привязки к твоему коту.</p>
+        </div>
+        <button class="btn btn--ghost btn--sm group-toggle" id="refToggle" aria-expanded="true">свернуть ▲</button>
+      </div>
+      <section class="tiles">
+        <a class="tile t-breeds" href="breeds.html">
+          <span class="emoji">🐈</span>
+          <h3>Породы</h3>
+          <p>Справочник пород: характер, питание, здоровье.</p>
+          <span class="go">открыть →</span>
+        </a>
+        <a class="tile t-food" href="food.html">
+          <span class="emoji">🍗</span>
+          <h3>Советы по еде</h3>
+          <p>Подбор и сравнение кормов. Пока в разработке.</p>
+          <span class="go">открыть →</span>
+        </a>
+        <a class="tile t-memes" href="memes.html">
+          <span class="emoji">😹</span>
+          <h3>Мемы про котов</h3>
+          <p>Немного хорошего настроения. Опционально.</p>
+          <span class="go">открыть →</span>
+        </a>
+      </section>
+    </div>
   </main>
 
   <footer class="foot">Cool Cat Kit · твой кот заслуживает блокнот 🐾</footer>

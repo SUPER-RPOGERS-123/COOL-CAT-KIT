@@ -98,6 +98,24 @@ PAGES.home = function () {
   if (g) g.innerHTML = `Привет, <span class="scribble">${u.name}</span>!`;
   const sub = $("#catLine");
   if (sub) sub.textContent = `Дневник кота по кличке ${u.catName}`;
+
+  // сворачивание справочника — состояние запоминаем в localStorage
+  const group = $("#refGroup");
+  const toggle = $("#refToggle");
+  if (group && toggle) {
+    const KEY = userKey("ref_collapsed");
+    const apply = (collapsed) => {
+      group.classList.toggle("collapsed", collapsed);
+      toggle.setAttribute("aria-expanded", String(!collapsed));
+      toggle.textContent = collapsed ? "развернуть ▼" : "свернуть ▲";
+    };
+    apply(Store.get(KEY, false));
+    toggle.addEventListener("click", () => {
+      const collapsed = !group.classList.contains("collapsed");
+      Store.set(KEY, collapsed);
+      apply(collapsed);
+    });
+  }
 };
 
 // Породы: сетка карточек + модалка с деталями (breeds.html)
