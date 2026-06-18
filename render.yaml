@@ -20,7 +20,7 @@ services:
         value: "10080"
       - key: AUTO_INIT_DB
         value: "1"
-      # адрес фронта на GitHub Pages (origin без пути). ПОДТВЕРДИ/ПОПРАВЬ:
+      # origin фронта на GitHub Pages (без пути /COOL-CAT-KIT/ — CORS его не учитывает)
       - key: CORS_ORIGINS
         value: https://super-rpogers-123.github.io
 
