@@ -9,7 +9,6 @@ const DEFAULT_AVATAR =
      </svg>`
   );
 
-// обёртки над localStorage
 const Store = {
   get(key, fallback) {
     try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }

@@ -19,7 +19,6 @@ function fileToDataURL(file) {
 
 // Вход / регистрация (index.html)
 PAGES.index = function () {
-  // если уже залогинен — сразу на главную
   if (Auth.current()) { location.href = "pages/home.html"; return; }
 
   const mount = $("#authMount");
