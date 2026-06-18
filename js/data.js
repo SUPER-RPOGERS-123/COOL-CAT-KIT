@@ -232,16 +232,16 @@ const FOOD_COMPARE = {
 
 // Мемы про котиков — лёгкий раздел для настроения. photo: webp в assets/memes.
 const MEMES = [
-  { id: 1,  photo: "assets/memes/meme-01.webp", caption: "когда услышал шуршание пакета на кухне" },
+  { id: 1,  photo: "assets/memes/meme-01.webp", caption: "я в 00:47 перед финальным отчётом" },
   { id: 2,  photo: "assets/memes/meme-02.webp", caption: "я не толстый, я просто в зимней комплектации" },
-  { id: 3,  photo: "assets/memes/meme-03.webp", caption: "сижу красиво, оцените" },
-  { id: 4,  photo: "assets/memes/meme-04.webp", caption: "3 часа ночи — самое время побегать по квартире" },
-  { id: 5,  photo: "assets/memes/meme-05.webp", caption: "это моя коробка. и вон та тоже моя" },
+  { id: 3,  photo: "assets/memes/meme-03.webp", caption: "базовая комплектация зумера (коты умнее нас)" },
+  { id: 4,  photo: "assets/memes/meme-04.webp", caption: "sigma cat" },
+  { id: 5,  photo: "assets/memes/meme-05.webp", caption: "чиловый парень" },
   { id: 6,  photo: "assets/memes/meme-06.webp", caption: "ветеринар сказал меньше есть. ветеринар уволен" },
-  { id: 7,  photo: "assets/memes/meme-07.webp", caption: "я тебя люблю, но трогать себя не дам" },
+  { id: 7,  photo: "assets/memes/meme-07.webp", caption: "продам гараж +791234565" },
   { id: 8,  photo: "assets/memes/meme-08.webp", caption: "столкнул кружку со стола. не жалею" },
-  { id: 9,  photo: "assets/memes/meme-09.webp", caption: "клавиатура занята. работа отменяется" },
-  { id: 10, photo: "assets/memes/meme-10.webp", caption: "понедельник? не знаю такого, я сплю 20 часов" },
-  { id: 11, photo: "assets/memes/meme-11.webp", caption: "налил полную миску — всё равно мало" },
-  { id: 12, photo: "assets/memes/meme-12.webp", caption: "смотрю в стену. там очень интересно" },
+  { id: 9,  photo: "assets/memes/meme-09.webp", caption: "балбес" },
+  { id: 10, photo: "assets/memes/meme-10.webp", caption: "понедельник день бездельник" },
+  { id: 11, photo: "assets/memes/meme-11.webp", caption: "отпустите бобика пожалуйста" },
+  { id: 12, photo: "assets/memes/meme-12.webp", caption: "злой." },
 ];
