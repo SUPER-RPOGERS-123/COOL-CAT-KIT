@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/style.css?v=8">
 </head>
 <body data-page="breeds">
   <main class="wrap">
@@ -16,7 +16,13 @@
     </div>
     <p class="muted">Нажми на карточку, чтобы открыть подробности: история, характер, питание и здоровье.</p>
 
+    <div class="breed-toolbar">
+      <input id="breedSearch" type="search" placeholder="🔎 поиск по названию или характеру…" autocomplete="off">
+      <span class="breed-count muted" id="breedCount"></span>
+    </div>
+
     <section class="breed-grid" id="breedGrid"></section>
+    <p class="empty" id="breedEmpty" hidden>Ничего не нашлось 🐾 попробуй другое слово</p>
   </main>
 
   <!-- модальное окно с деталями породы -->
@@ -29,8 +35,8 @@
 
   <footer class="foot">выбирай породу с умом 🐾</footer>
 
-  <script src="../js/data.js"></script>
-  <script src="../js/app.js"></script>
-  <script src="../js/pages.js"></script>
+  <script src="../js/data.js?v=8"></script>
+  <script src="../js/app.js?v=8"></script>
+  <script src="../js/pages.js?v=8"></script>
 </body>
 </html>

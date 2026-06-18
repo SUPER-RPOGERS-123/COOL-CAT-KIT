@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/style.css?v=8">
 </head>
 <body data-page="profile">
   <main class="wrap">
@@ -15,7 +15,7 @@
       <h1>Профиль</h1>
     </div>
 
-    <div class="card form-card card--tilt-r">
+    <div class="card form-card form-card--wide card--tilt-r">
       <span class="tape"></span>
       <form id="profileForm">
         <div class="avatar-edit">
@@ -25,9 +25,32 @@
             <input id="avFile" type="file" accept="image/*" hidden>
           </label>
         </div>
+
+        <h3 class="form-section">Хозяин</h3>
         <div class="field"><label>Ваше имя</label><input id="pf-name" required></div>
-        <div class="field"><label>Кличка котика</label><input id="pf-cat"></div>
         <div class="field"><label>Email</label><input id="pf-email" disabled></div>
+
+        <h3 class="form-section">Паспорт кота <span class="form-section-note" id="pf-age"></span></h3>
+        <div class="field"><label>Кличка</label><input id="pf-cat" placeholder="Барсик"></div>
+        <div class="field-row">
+          <div class="field"><label>Порода</label><select id="pf-breed"></select></div>
+          <div class="field"><label>Пол</label>
+            <select id="pf-sex">
+              <option value="">—</option>
+              <option value="m">♂ кот</option>
+              <option value="f">♀ кошка</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Дата рождения</label><input id="pf-birth" type="date"></div>
+          <div class="field"><label>Чип / клеймо</label><input id="pf-chip" placeholder="номер"></div>
+        </div>
+        <div class="field"><label>Текущий вес</label>
+          <div class="pf-weight"><span id="pf-weight" class="muted">—</span>
+            <a class="btn btn--ghost btn--sm" href="weight.html">⚖️ трекер веса</a></div>
+        </div>
+
         <button class="btn btn--block" type="submit">Сохранить</button>
       </form>
       <div style="text-align:center;margin-top:16px">
@@ -38,7 +61,8 @@
 
   <footer class="foot">это твой блокнот, храни его 🐾</footer>
 
-  <script src="../js/app.js"></script>
-  <script src="../js/pages.js"></script>
+  <script src="../js/data.js?v=8"></script>
+  <script src="../js/app.js?v=8"></script>
+  <script src="../js/pages.js?v=8"></script>
 </body>
 </html>

@@ -211,6 +211,8 @@ h3 { font-size: 1.5rem; }
 .tile.t-calendar::before{ background: var(--steel); }
 .tile.t-history::before { background: var(--navy); }
 .tile.t-memes::before   { background: var(--pen-red); }
+.tile.t-weight::before  { background: var(--sage-600); }
+.tile.t-foodtips::before { background: var(--pen-blue); }
 
 /* Сетка пород */
 .breed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 30px; margin: 30px 0; }
@@ -224,7 +226,7 @@ h3 { font-size: 1.5rem; }
 .breed-card:nth-child(3n+2) { transform: rotate(1deg); }
 .breed-card:nth-child(3n)   { transform: rotate(-.5deg); }
 .breed-card:hover { transform: rotate(0) translateY(-5px); box-shadow: var(--shadow); }
-.breed-card img { width: 100%; height: 210px; object-fit: cover; border-radius: 6px; }
+.breed-card img { width: 100%; height: 210px; object-fit: cover; object-position: center 12%; border-radius: 6px; }
 .breed-card h3 { margin: 12px 0 2px; }
 .breed-card .life { font-size: .9rem; color: var(--ink-soft); }
 .breed-card .tag { font-family: var(--font-hand); color: var(--pen-blue); font-size: 1.15rem; }
@@ -242,16 +244,37 @@ h3 { font-size: 1.5rem; }
   padding: 26px 30px 34px; border: 1px solid #ddd6bf;
 }
 .modal .close {
-  position: absolute; top: 6px; right: 10px; z-index: 2; border: none; background: none;
-  font-size: 1.8rem; cursor: pointer; color: var(--ink-soft); line-height: 1;
+  position: absolute; top: 8px; right: 8px; z-index: 5; cursor: pointer;
+  width: 38px; height: 38px; border-radius: 50%; border: 1px solid #ddd6bf;
+  background: var(--paper); color: var(--ink-soft); font-size: 1.55rem; line-height: 1;
+  display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm);
+  transition: background .15s ease, color .15s ease;
 }
-.modal .hero-img { width: 100%; height: 240px; object-fit: cover; border-radius: 8px; transform: rotate(-1deg); border: 6px solid #fff; box-shadow: var(--shadow-sm); }
+.modal .close:hover { background: var(--pen-red); color: #fff; }
+/* фото опущено вниз, чтобы крестик в углу не лёг на котика; единый формат 4:3 + кроп по фокусу породы */
+.modal .hero-img { display: block; width: 100%; aspect-ratio: 4 / 3; height: auto; margin-top: 26px; object-fit: cover; object-position: center 25%; border-radius: 8px; transform: rotate(-1deg); border: 6px solid #fff; box-shadow: var(--shadow-sm); }
 .modal h2 { margin-top: 18px; }
 .modal .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 14px; }
 .modal .block h3 { color: var(--teal); font-size: 1.4rem; margin-bottom: 4px; }
 .modal ul { margin: 0; padding-left: 20px; }
 .modal ul li { margin: 2px 0; }
 .pill { display: inline-block; background: var(--sage-100); color: var(--forest); padding: 2px 12px; border-radius: 999px; font-weight: 700; font-size: .9rem; }
+
+/* строки событий и кнопка удаления внутри модалки (календарь) */
+.modal .row { display: flex; align-items: center; gap: 10px; }
+.modal .reminder-row {
+  margin: 8px 0; padding: 8px 12px;
+  background: #fffdf6; border: 1px solid #e9e3cf; border-radius: 8px;
+}
+.modal .reminder-row span { flex: 1; }
+.modal .del {
+  flex-shrink: 0; border: none; background: none; cursor: pointer;
+  color: var(--pen-red); font-size: 1.35rem; line-height: 1;
+  padding: 4px 8px; border-radius: 8px; transition: background .15s ease;
+}
+.modal .del:hover { background: rgba(181, 86, 63, .14); }
+/* селект выбора типа события — чуть крупнее, удобнее попадать */
+.modal .field select { font-size: 1.08rem; padding: 13px 14px; min-height: 50px; }
 
 /* Формы (вход / регистрация / профиль) */
 .form-card { max-width: 440px; margin: 30px auto; }
@@ -263,6 +286,8 @@ h3 { font-size: 1.5rem; }
 }
 .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(77,107,115,.18); }
 .field textarea { resize: vertical; min-height: 90px; }
+/* Safari/WebKit рендерит input[type=date] по ширине контента — заставляем растянуться */
+.field input[type="date"] { -webkit-appearance: none; appearance: none; width: 100%; min-height: 46px; }
 .form-msg { font-family: var(--font-hand); font-size: 1.2rem; min-height: 1.4em; }
 .form-msg.err { color: var(--pen-red); }
 .form-msg.ok  { color: var(--sage-700); }
@@ -414,4 +439,125 @@ h3 { font-size: 1.5rem; }
   padding: 4px 0 16px 28px;
   color: var(--ink-soft);
   line-height: 1.6;
+}
+
+/* ======================= v3: новые компоненты ======================= */
+
+/* строка из двух полей */
+.field-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.field-row > .field { flex: 1 1 140px; margin-bottom: 16px; }
+
+/* подзаголовок секции формы */
+.form-section {
+  font-family: var(--font-hand); font-size: 1.5rem; color: var(--teal);
+  margin: 18px 0 8px; padding-bottom: 4px; border-bottom: 2px dashed var(--sage-200);
+}
+.form-section:first-of-type { margin-top: 6px; }
+.form-section-note { font-size: 1rem; color: var(--ink-soft); }
+.form-card--wide { max-width: 560px; }
+.pf-weight { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+/* ---------- Дашборд на главной ---------- */
+.dash { margin: 26px 0 8px; padding: 22px 24px; }
+.dash-pet { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.dash-ava {
+  width: 84px; height: 84px; border-radius: 50%; object-fit: cover;
+  border: 4px solid var(--sage); transform: rotate(-3deg); box-shadow: var(--shadow-sm); flex-shrink: 0;
+}
+.dash-pet-info h2 { margin: 0 0 4px; font-size: 2.1rem; }
+.dash-meta { display: flex; gap: 8px 14px; flex-wrap: wrap; color: var(--ink); font-size: .98rem; }
+.dash-meta span { background: var(--paper-2); border-radius: 999px; padding: 2px 12px; }
+.dash-edit {
+  display: inline-block; margin-top: 8px; font-family: var(--font-hand);
+  font-size: 1.2rem; color: var(--pen-red); text-decoration: none;
+}
+.dash-edit:hover { text-decoration: underline; }
+
+.dash-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 20px; }
+.dash-box {
+  background: #fffdf6; border: 1px solid #e9e3cf; border-radius: var(--radius);
+  padding: 14px 16px; display: flex; flex-direction: column;
+}
+.dash-box h3 { font-size: 1.3rem; margin: 0 0 8px; color: var(--forest); }
+.dash-vac { margin: 0 0 6px; }
+.dash-ok   { color: var(--sage-700); }
+.dash-warn { color: var(--pen-red); }
+.dash-events { list-style: none; margin: 0 0 6px; padding: 0; }
+.dash-events li { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; border-bottom: 1px dashed var(--line); }
+.dash-events li:last-child { border-bottom: none; }
+.dash-ev-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-when { color: var(--ink-soft); font-size: .85rem; white-space: nowrap; flex-shrink: 0; }
+.dash-link { margin-top: auto; font-family: var(--font-hand); font-size: 1.15rem; color: var(--pen-blue); text-decoration: none; }
+.dash-link:hover { text-decoration: underline; }
+
+/* ---------- Поиск по породам ---------- */
+.breed-toolbar { display: flex; align-items: center; gap: 14px; margin: 8px 0 2px; flex-wrap: wrap; }
+#breedSearch {
+  flex: 1 1 260px; padding: 11px 16px; border: 2px solid var(--sage-600); border-radius: 999px;
+  background: #fffdf6; font-family: var(--font-body); font-size: 1rem; color: var(--ink);
+}
+#breedSearch:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(77,107,115,.18); }
+.breed-count { font-size: .9rem; white-space: nowrap; }
+
+/* ---------- Фильтр-чипы (медраздел) ---------- */
+.note-filters { display: flex; gap: 10px; flex-wrap: wrap; margin: 6px 0 4px; }
+.chip {
+  border: 2px solid var(--sage-200); background: #fffdf6; color: var(--forest);
+  border-radius: 999px; padding: 6px 16px; cursor: pointer; font-family: var(--font-body);
+  font-size: .95rem; font-weight: 600; transition: all .15s ease;
+}
+.chip:hover { border-color: var(--sage-600); }
+.chip.active { background: var(--sage); border-color: var(--sage-700); color: #fff; }
+
+/* следующая прививка в карточке заметки */
+.next-due {
+  margin: 6px 0; font-size: .9rem; color: var(--sage-700);
+  background: var(--sage-100); border-radius: 8px; padding: 5px 10px; display: inline-block;
+}
+.next-due.overdue { color: #fff; background: var(--pen-red); }
+
+/* ---------- Трекер веса ---------- */
+.weight-chart-card { margin: 22px 0; padding: 18px 20px; }
+.weight-chart-head { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 8px; }
+.weight-chart-head h3 { margin: 0; }
+.weight-stats { display: flex; gap: 10px 16px; align-items: baseline; flex-wrap: wrap; font-size: .92rem; }
+.ws-cur b { font-size: 1.5rem; color: var(--forest); font-family: var(--font-hand); }
+.ws-trend { font-weight: 700; }
+.ws-trend.up { color: var(--pen-red); }
+.ws-trend.down { color: var(--sage-700); }
+.ws-trend.flat { color: var(--ink-soft); }
+.weight-canvas-wrap { width: 100%; }
+.weight-canvas-wrap canvas { display: block; width: 100%; }
+
+.weight-list { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 30px; max-width: 520px; }
+.wl-row {
+  display: flex; align-items: center; gap: 12px;
+  background: #fffdf6; border: 1px solid #e9e3cf; border-radius: 8px; padding: 10px 14px;
+}
+.wl-date { color: var(--ink-soft); min-width: 92px; }
+.wl-kg { flex: 1; font-weight: 700; }
+.wl-delta { font-weight: 700; font-size: .85rem; margin-left: 6px; }
+.wl-delta.up { color: var(--pen-red); }
+.wl-delta.down { color: var(--sage-700); }
+.wl-delta.flat { color: var(--ink-soft); }
+.wl-row .del { border: none; background: none; cursor: pointer; color: var(--pen-red); font-size: 1.15rem; }
+
+/* ---------- Калькулятор корма ---------- */
+.food-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; align-items: start; margin: 22px 0; }
+.food-result { position: sticky; top: 18px; }
+.food-big { display: flex; gap: 16px; flex-wrap: wrap; margin: 6px 0 14px; }
+.food-num {
+  flex: 1 1 130px; text-align: center; background: #fffdf6; border: 1px solid #e9e3cf;
+  border-radius: var(--radius); padding: 14px 10px;
+}
+.food-num b { display: block; font-family: var(--font-hand); font-size: 2.6rem; color: var(--forest); line-height: 1; }
+.food-num span { font-size: .85rem; color: var(--ink-soft); }
+.food-num.accent b { color: var(--teal); }
+.food-notes { margin: 0; padding-left: 20px; font-size: .95rem; }
+.food-notes li { margin: 5px 0; }
+
+@media (max-width: 720px) {
+  .dash-cols { grid-template-columns: 1fr; }
+  .food-layout { grid-template-columns: 1fr; }
+  .food-result { position: static; }
 }
