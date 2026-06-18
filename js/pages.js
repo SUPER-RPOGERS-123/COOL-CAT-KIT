@@ -102,18 +102,54 @@ PAGES.home = function () {
   // сворачивание справочника — состояние запоминаем в localStorage
   const group = $("#refGroup");
   const toggle = $("#refToggle");
-  if (group && toggle) {
+  const wrap = group?.querySelector(".tiles-wrap");
+  if (group && toggle && wrap) {
     const KEY = userKey("ref_collapsed");
-    const apply = (collapsed) => {
-      group.classList.toggle("collapsed", collapsed);
+
+    const expand = (animate) => {
+      group.classList.remove("collapsed");
+      wrap.style.overflow = "hidden";
+      if (animate) {
+        wrap.style.maxHeight = wrap.scrollHeight + "px";
+        wrap.addEventListener("transitionend", function te(e) {
+          if (e.target !== wrap || e.propertyName !== "max-height") return;
+          // отпускаем высоту, чтобы при ресайзе плитки не обрезались
+          wrap.style.maxHeight = "none";
+          wrap.style.overflow = "visible";
+          wrap.removeEventListener("transitionend", te);
+        });
+      } else {
+        wrap.style.maxHeight = "none";
+        wrap.style.overflow = "visible";
+      }
+    };
+
+    const collapse = (animate) => {
+      group.classList.add("collapsed");
+      wrap.style.overflow = "hidden";
+      if (animate) {
+        wrap.style.maxHeight = wrap.scrollHeight + "px"; // от текущей высоты
+        void wrap.offsetHeight;                          // форсируем reflow
+        wrap.style.maxHeight = "0px";
+      } else {
+        wrap.style.maxHeight = "0px";
+      }
+    };
+
+    const setLabel = (collapsed) => {
       toggle.setAttribute("aria-expanded", String(!collapsed));
       toggle.textContent = collapsed ? "развернуть ▼" : "свернуть ▲";
     };
-    apply(Store.get(KEY, false));
+
+    let collapsed = Store.get(KEY, false);
+    (collapsed ? collapse : expand)(false); // на загрузке без анимации
+    setLabel(collapsed);
+
     toggle.addEventListener("click", () => {
-      const collapsed = !group.classList.contains("collapsed");
+      collapsed = !collapsed;
       Store.set(KEY, collapsed);
-      apply(collapsed);
+      (collapsed ? collapse : expand)(true);
+      setLabel(collapsed);
     });
   }
 };

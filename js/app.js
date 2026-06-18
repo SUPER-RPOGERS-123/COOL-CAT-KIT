@@ -78,6 +78,8 @@ function toast(msg) {
 function buildTopbar({ back } = {}) {
   const u = Auth.current();
   const b = base();
+  // на самой странице входа кнопка "Войти" в углу не нужна — вход уже в карточке
+  const onAuthPage = document.body.dataset.page === "index";
   const bar = document.createElement("header");
   bar.className = "topbar";
   bar.innerHTML = `
@@ -91,7 +93,7 @@ function buildTopbar({ back } = {}) {
         ? `<a class="me" href="${b}pages/profile.html" title="Профиль">
              <img src="${u.avatar}" alt="avatar"><span class="hand" style="font-size:1.2rem">${u.catName}</span>
            </a>`
-        : `<a class="btn btn--sm" href="${b}index.html">Войти</a>`
+        : onAuthPage ? "" : `<a class="btn btn--sm" href="${b}index.html">Войти</a>`
     }`;
   document.body.prepend(bar);
 
@@ -117,6 +119,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const init = PAGES[page];
   if (init) init();
+
+  initFaq();
 });
+
+// FAQ-аккордеон на странице входа: открыт только один пункт за раз
+function initFaq() {
+  const items = [...document.querySelectorAll(".faq-item")];
+
+  const close = (item) => {
+    const a = item.querySelector(".faq-a");
+    // если высота была отпущена в none — вернуть px, чтобы анимировать к 0
+    if (a.style.maxHeight === "none") { a.style.maxHeight = a.scrollHeight + "px"; void a.offsetHeight; }
+    item.classList.remove("open");
+    a.style.maxHeight = "0px";
+  };
+  const open = (item) => {
+    const a = item.querySelector(".faq-a");
+    item.classList.add("open");
+    a.style.maxHeight = a.scrollHeight + "px"; // реальная высота ответа
+    a.addEventListener("transitionend", function te(e) {
+      if (e.target !== a || e.propertyName !== "max-height") return;
+      if (item.classList.contains("open")) a.style.maxHeight = "none"; // ресайз-безопасно
+      a.removeEventListener("transitionend", te);
+    });
+  };
+
+  items.forEach((item) => {
+    const q = item.querySelector(".faq-q");
+    if (!q) return;
+    q.addEventListener("click", () => {
+      const wasOpen = item.classList.contains("open");
+      items.forEach(close);
+      if (!wasOpen) open(item);
+    });
+  });
+}
 
 const PAGES = {}; // инициализаторы страниц заполняются в pages.js

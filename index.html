@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cool Cat Kit — дневник вашего кота</title>
+  <title>Cool Cat Kit — дневник вашего котика</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
@@ -13,13 +13,47 @@
   <main class="wrap">
     <section class="hero">
       <h1>Cool Cat Kit <span class="paw" style="font-size:2.4rem">🐾</span></h1>
-      <p class="sub">Личный дневник и кабинет вашего кота: здоровье, прививки, питание и история жизни — всё в одном блокноте.</p>
+      <p class="sub">Личный дневник и кабинет вашего котика: здоровье, прививки, питание и история жизни — всё в одном блокноте.</p>
       <p class="doodle">↓ войдите, чтобы открыть блокнот</p>
     </section>
     <div id="authMount"></div>
+
+    <section class="faq" id="faq">
+      <h2 class="faq-title">Частые вопросы <span class="paw">🐾</span></h2>
+
+      <div class="faq-item">
+        <button class="faq-q" type="button">Зачем нужна регистрация?</button>
+        <div class="faq-a"><p>Аккаунт нужен, чтобы дневник, прививки, календарь и история жизни кота
+          хранились отдельно для каждого хозяина и не путались между собой.</p></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" type="button">Где хранятся мои данные?</button>
+        <div class="faq-a"><p>Всё лежит прямо в вашем браузере (localStorage) на этом устройстве.
+          Никакой сервер ничего не получает — данные не покидают компьютер.</p></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" type="button">Это бесплатно?</button>
+        <div class="faq-a"><p>Да, полностью. Cool Cat Kit — учебный дневник для кота, без оплат,
+          подписок и рекламы.</p></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" type="button">Что можно вести в дневнике?</button>
+        <div class="faq-a"><p>Заметки о здоровье и прививках, напоминания в календаре, ленту историй
+          с фото и справочник пород — всё в одном блокноте.</p></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" type="button">Забыл пароль — что делать?</button>
+        <div class="faq-a"><p>Поскольку данные хранятся только локально, восстановить пароль нельзя.
+          Заведите новый аккаунт — старые записи останутся привязаны к прежнему email.</p></div>
+      </div>
+    </section>
   </main>
 
-  <footer class="foot">сделано с любовью к котам · практика 2026</footer>
+  <footer class="foot">сделано с любовью к котикам · практика 2026, команда 24</footer>
 
   <script src="js/app.js"></script>
   <script src="js/pages.js"></script>

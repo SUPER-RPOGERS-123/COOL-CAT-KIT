@@ -171,7 +171,17 @@ h3 { font-size: 1.5rem; }
 .group-head .muted { margin: 0 0 2px; font-size: .95rem; }
 .group-head-text { flex: 1; }
 .group-toggle { flex-shrink: 0; white-space: nowrap; }
-.cabinet-group.collapsed .tiles { display: none; }
+/* плавное сворачивание справочника: max-height задаётся из JS — работает во всех браузерах */
+.tiles-wrap {
+  overflow: hidden;
+  margin-top: 6px;
+  transition: max-height .42s ease, opacity .3s ease;
+}
+.cabinet-group.collapsed .tiles-wrap { opacity: 0; }
+.tiles-wrap > .tiles {
+  margin: 0 -12px;      /* запас, чтобы тень/наклон плиток не обрезались */
+  padding: 12px;
+}
 
 /* Сетка разделов на главной (dashboard) */
 .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 26px; margin: 18px 0 0; }
@@ -344,3 +354,64 @@ h3 { font-size: 1.5rem; }
   opacity: 0; pointer-events: none; transition: all .25s ease; z-index: 200;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ---------- FAQ (страница входа) ---------- */
+.faq {
+  max-width: 620px;
+  margin: 44px auto 64px;
+}
+.faq-title {
+  text-align: center;
+  color: var(--forest);
+  margin-bottom: 22px;
+}
+.faq-title .paw { font-size: 2rem; }
+
+.faq-item {
+  background: #fffdf6;
+  border: 1px solid #e3ddc8;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 4px 18px;
+  margin-bottom: 14px;
+  transform: rotate(-.4deg);
+}
+.faq-item:nth-child(even) { transform: rotate(.5deg); }
+
+.faq-q {
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-hand);
+  font-size: 1.45rem;
+  color: var(--forest);
+  padding: 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  user-select: none;
+}
+.faq-q::before {
+  content: "✎";
+  color: var(--pen-red);
+  font-size: 1.2rem;
+  transition: transform .25s ease;
+}
+.faq-item.open .faq-q::before { transform: rotate(90deg); }
+
+/* плавное раскрытие ответа: max-height задаётся из JS по реальной высоте */
+.faq-a {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height .32s ease, opacity .3s ease;
+}
+.faq-item.open .faq-a { opacity: 1; }
+.faq-a > p {
+  margin: 0;
+  padding: 4px 0 16px 28px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
