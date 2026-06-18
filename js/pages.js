@@ -58,7 +58,7 @@ function breedName(id) {
   const b = BREEDS.find((x) => x.id === id);
   return b ? b.name : "";
 }
-const SEX_LABEL = { m: "♂ кот", f: "♀ кошка" };
+const SEX_LABEL = { m: "♂ котик", f: "♀ кошка" };
 
 // ── константы разделов ──────────────────────────────────────────────
 const KIND_LABEL = { vaccine: "💉 Прививка", med: "🩺 Медицина", note: "📝 Заметка" };
@@ -126,7 +126,7 @@ PAGES.index = function () {
                    </label>
                  </div>
                  <div class="field"><label>Как зовут вас</label><input name="name" required></div>
-                 <div class="field"><label>Кличка кота</label><input name="catName" placeholder="Барсик"></div>`
+                 <div class="field"><label>Кличка котика</label><input name="catName" placeholder="Барсик"></div>`
               : ""
           }
           <div class="field"><label>Email</label><input name="email" type="email" required></div>
@@ -165,7 +165,7 @@ PAGES.index = function () {
         if (isReg) {
           await Auth.register({
             name: fd.get("name"), email: fd.get("email"), password: fd.get("password"),
-            catName: fd.get("catName"), avatar: avatarData,
+            catName: fd.get("catName") || "Котик", avatar: avatarData,
           });
         } else {
           await Auth.login(fd.get("email"), fd.get("password"));
@@ -186,7 +186,7 @@ PAGES.home = async function () {
   const g = $("#greeting");
   if (g) g.innerHTML = `Привет, <span class="scribble">${me.name}</span>!`;
   const sub = $("#catLine");
-  if (sub) sub.textContent = `Дневник кота по кличке ${me.cat.name}`;
+  if (sub) sub.textContent = `Дневник котика по кличке ${me.cat.name}`;
 
   const dash = $("#dashboard");
   if (dash) {
@@ -216,7 +216,7 @@ PAGES.home = async function () {
           <div class="dash-pet-info">
             <h2 class="hand">${escapeHtml(cat.name)}</h2>
             <div class="dash-meta">${chips || `<span class="muted">паспорт пока не заполнен</span>`}</div>
-            <a class="dash-edit" href="profile.html">✎ паспорт кота</a>
+            <a class="dash-edit" href="profile.html">✎ паспорт котика</a>
           </div>
         </div>
         <div class="dash-cols">
@@ -340,6 +340,83 @@ PAGES.breeds = function () {
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
 };
 
+// ── Советы по еде: карточки кормов + сравнение (food-tips.html) ──────
+PAGES["food-tips"] = function () {
+  const grid = $("#foodGrid");
+  if (!grid || typeof FOODS === "undefined") return;
+
+  grid.innerHTML = FOODS.map((f) => `
+    <article class="food-card" data-id="${f.id}">
+      <img src="../${f.photo}" alt="${f.name}" loading="lazy">
+      <div class="food-card-body">
+        <span class="food-badge food-${f.cls}">${f.clsLabel}</span>
+        <h3>${f.name}</h3>
+        <div class="tag">${f.tagline}</div>
+        <div class="food-price">${f.price}</div>
+      </div>
+    </article>`).join("");
+
+  const cmp = $("#foodCompare");
+  if (cmp && typeof FOOD_COMPARE !== "undefined") {
+    cmp.innerHTML = `
+      <h2>Классы кормов</h2>
+      <div class="food-table-wrap">
+        <table class="food-table">
+          <thead><tr><th></th>${FOOD_COMPARE.cols.map((c) => `<th>${c}</th>`).join("")}</tr></thead>
+          <tbody>${FOOD_COMPARE.rows.map((r) =>
+            `<tr><th>${r[0]}</th>${r.slice(1).map((c) => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody>
+        </table>
+      </div>`;
+  }
+
+  const backdrop = $("#foodModal");
+  const body = $("#foodModalBody");
+  function openFood(id) {
+    const f = FOODS.find((x) => x.id === id);
+    if (!f) return;
+    body.innerHTML = `
+      <img class="hero-img" src="../${f.photo}" alt="${f.name}">
+      <h2>${f.name} <span class="pill">${f.clsLabel}</span></h2>
+      <p class="hand" style="font-size:1.3rem;color:var(--pen-blue);margin:0 0 8px">${f.tagline}</p>
+      <div class="block"><h3>О корме</h3><p>${f.desc}</p></div>
+      <div class="block"><h3>Цена</h3><p>${f.price}</p></div>`;
+    backdrop.classList.add("open");
+  }
+  function close() { backdrop.classList.remove("open"); }
+  grid.addEventListener("click", (e) => { const c = e.target.closest(".food-card"); if (c) openFood(+c.dataset.id); });
+  $("#foodClose").addEventListener("click", close);
+  backdrop.addEventListener("click", (e) => { if (e.target === backdrop) close(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+};
+
+// ── Мемы про котиков (memes.html) — статичная подборка, без API ─────
+PAGES.memes = function () {
+  const grid = $("#memeGrid");
+  if (!grid || typeof MEMES === "undefined") return;
+
+  grid.innerHTML = MEMES.map((m) => `
+    <article class="meme-card" data-id="${m.id}">
+      <img src="../${m.photo}?v=${ASSET_VER}" alt="${m.caption}" loading="lazy">
+      <div class="meme-cap">${m.caption}</div>
+    </article>`).join("");
+
+  const backdrop = $("#memeModal");
+  const body = $("#memeModalBody");
+  function openMeme(id) {
+    const m = MEMES.find((x) => x.id === id);
+    if (!m) return;
+    body.innerHTML = `
+      <img class="meme-modal-img" src="../${m.photo}?v=${ASSET_VER}" alt="${m.caption}">
+      <p class="meme-modal-cap">${m.caption}</p>`;
+    backdrop.classList.add("open");
+  }
+  function close() { backdrop.classList.remove("open"); }
+  grid.addEventListener("click", (e) => { const c = e.target.closest(".meme-card"); if (c) openMeme(+c.dataset.id); });
+  $("#memeClose").addEventListener("click", close);
+  backdrop.addEventListener("click", (e) => { if (e.target === backdrop) close(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+};
+
 // ── Медицина / прививки (medical.html) ──────────────────────────────
 PAGES.medical = async function () {
   const listEl = $("#notesList");
@@ -355,7 +432,7 @@ PAGES.medical = async function () {
   function render() {
     const shown = notes.filter((n) => filter === "all" || n.kind === filter);
     if (!shown.length) {
-      listEl.innerHTML = `<p class="empty">${notes.length ? "В этой категории пусто" : "Пока пусто. Запиши первую заметку про здоровье кота 🐾"}</p>`;
+      listEl.innerHTML = `<p class="empty">${notes.length ? "В этой категории пусто" : "Пока пусто. Запиши первую заметку про здоровье котика 🐾"}</p>`;
       return;
     }
     listEl.innerHTML = shown
@@ -554,7 +631,7 @@ PAGES.food = async function () {
 
   function calc() {
     const kg = parseFloat(form.kg.value);
-    if (!(kg > 0)) { out.innerHTML = `<p class="form-msg err">Укажи вес кота</p>`; return; }
+    if (!(kg > 0)) { out.innerHTML = `<p class="form-msg err">Укажи вес котика</p>`; return; }
     const stage = form.stage.value;
     const activity = form.activity.value;
     const neutered = form.neutered.value === "yes";
@@ -731,7 +808,7 @@ function drawWeightChart(canvas, data) {
   });
 }
 
-// ── История кота (history.html) ─────────────────────────────────────
+// ── История котика (history.html) ─────────────────────────────────────
 PAGES.history = async function () {
   const feed = $("#feed");
   let posts = await api("/posts");
@@ -739,7 +816,7 @@ PAGES.history = async function () {
 
   function render() {
     if (!posts.length) {
-      feed.innerHTML = `<p class="empty">История пока чистая. Добавь первый момент из жизни кота ✏️</p>`;
+      feed.innerHTML = `<p class="empty">История пока чистая. Добавь первый момент из жизни котика ✏️</p>`;
       return;
     }
     feed.innerHTML = posts
@@ -781,7 +858,7 @@ PAGES.history = async function () {
   render();
 };
 
-// ── Профиль + паспорт кота (profile.html) ───────────────────────────
+// ── Профиль + паспорт котика (profile.html) ───────────────────────────
 PAGES.profile = async function () {
   const me = Auth.current();
   const cat = me.cat;
@@ -828,7 +905,7 @@ PAGES.profile = async function () {
     try {
       await Auth.update({
         name: $("#pf-name").value.trim(),
-        catName: $("#pf-cat").value.trim() || "Кот",
+        catName: $("#pf-cat").value.trim() || "Котик",
         avatarUrl: avatarData,
         breedId: breedVal ? Number(breedVal) : null,
         sex: $("#pf-sex").value || null,

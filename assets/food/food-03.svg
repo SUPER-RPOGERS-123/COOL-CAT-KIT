@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="440" viewBox="0 0 600 440">
+  <rect width="600" height="440" fill="#fffdf6"/>
+  <g transform="rotate(-2 300 230)">
+    <rect x="186" y="66" width="228" height="320" rx="26" fill="#2f4a63"/>
+    <rect x="186" y="66" width="228" height="34" rx="17" fill="#1f3a5e"/>
+    <rect x="232" y="70" width="136" height="10" rx="5" fill="#fffdf6" opacity="0.55"/>
+    <text x="300" y="150" text-anchor="middle" font-size="46">🐾</text>
+    <rect x="210" y="178" width="180" height="120" rx="16" fill="#fffdf6"/>
+    <text x="300" y="228" text-anchor="middle" font-family="Nunito,Arial,sans-serif" font-weight="800" font-size="26" fill="#1f3a5e">Royal Canin</text>
+    <text x="300" y="262" text-anchor="middle" font-family="Nunito,Arial,sans-serif" font-size="15" fill="#5b6452">Супер-премиум</text>
+    <text x="300" y="356" text-anchor="middle" font-size="50">🍗</text>
+  </g>
+</svg>

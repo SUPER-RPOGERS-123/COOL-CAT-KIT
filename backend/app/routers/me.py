@@ -33,7 +33,7 @@ def update_me(
         if key in fields:
             val = fields[key]
             if attr == "name" and not val:
-                val = "Кот"
+                val = "Котик"
             setattr(cat, attr, val)
     db.commit()
     db.refresh(user)

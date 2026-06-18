@@ -19,7 +19,7 @@ class RegisterIn(Schema):
     name: str
     email: EmailStr
     password: str = Field(min_length=4)
-    cat_name: Optional[str] = "Кот"
+    cat_name: Optional[str] = "Котик"
 
 
 class LoginIn(Schema):

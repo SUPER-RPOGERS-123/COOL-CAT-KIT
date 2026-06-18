@@ -18,7 +18,7 @@ def register(data: RegisterIn, db: Session = Depends(get_db)):
     user = User(email=email, password_hash=hash_password(data.password), name=data.name)
     db.add(user)
     db.flush()  # получить user.id
-    db.add(Cat(user_id=user.id, name=data.cat_name or "Кот"))
+    db.add(Cat(user_id=user.id, name=data.cat_name or "Котик"))
     db.commit()
     return TokenOut(token=create_token(user.id))
 

@@ -60,7 +60,7 @@ class Cat(Base):
     user_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    name: Mapped[str] = mapped_column(Text, nullable=False, default="Кот")
+    name: Mapped[str] = mapped_column(Text, nullable=False, default="Котик")
     breed_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("breeds.id"))
     sex: Mapped[str | None] = mapped_column(Text)        # 'm' | 'f' | NULL
     birthday: Mapped[dt.date | None] = mapped_column(Date)

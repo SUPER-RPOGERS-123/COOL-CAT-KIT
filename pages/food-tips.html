@@ -7,22 +7,34 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/style.css?v=9">
+  <link rel="stylesheet" href="../css/style.css?v=13">
 </head>
 <body data-page="food-tips">
   <main class="wrap">
-    <section class="stub">
-      <div class="big">🍗</div>
-      <h2>Советы по еде</h2>
-      <p>Здесь будет подбор и сравнение кормов под породу, возраст и здоровье кота.</p>
-      <p class="hand muted" style="font-size:1.4rem">раздел пока пустой — наполним чуть позже</p>
-      <p style="margin-top:24px"><a class="btn" href="home.html">← на главную</a></p>
-    </section>
+    <div class="section-head">
+      <h1>Советы по еде</h1>
+      <span class="spacer"></span>
+      <a class="btn btn--teal btn--sm" href="food.html">🧮 калькулятор корма</a>
+    </div>
+    <p class="muted">Подборка кормов разных классов. Нажми на карточку, чтобы открыть состав и цену. Ниже — таблица отличий по классам.</p>
+
+    <section class="food-grid" id="foodGrid"></section>
+
+    <section class="food-compare" id="foodCompare"></section>
   </main>
 
-  <footer class="foot">скоро тут будет вкусно 🍗</footer>
+  <!-- модальное окно с деталями корма -->
+  <div class="modal-backdrop" id="foodModal">
+    <div class="modal">
+      <button class="close" id="foodClose">&times;</button>
+      <div id="foodModalBody"></div>
+    </div>
+  </div>
 
-  <script src="../js/app.js?v=9"></script>
-  <script src="../js/pages.js?v=9"></script>
+  <footer class="foot">кормим с умом, любим без меры 🍗</footer>
+
+  <script src="../js/data.js?v=13"></script>
+  <script src="../js/app.js?v=13"></script>
+  <script src="../js/pages.js?v=13"></script>
 </body>
 </html>

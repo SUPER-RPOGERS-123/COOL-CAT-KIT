@@ -30,7 +30,7 @@ CREATE TABLE breeds (
 CREATE TABLE cats (
     id         BIGSERIAL PRIMARY KEY,
     user_id    BIGINT      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    name       TEXT        NOT NULL DEFAULT 'Кот',        -- кличка
+    name       TEXT        NOT NULL DEFAULT 'Котик',        -- кличка
     breed_id   BIGINT      REFERENCES breeds(id),         -- NULL = порода не указана
     sex        TEXT        CHECK (sex IN ('m','f')),      -- NULL = не указан
     birthday   DATE,                                      -- возраст считаем на лету
