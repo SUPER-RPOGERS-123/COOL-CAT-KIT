@@ -443,6 +443,17 @@ h3 { font-size: 1.5rem; }
 
 /* ======================= v3: новые компоненты ======================= */
 
+/* экран загрузки (профиль/данные с сервера, «холодный старт») */
+.app-loader {
+  position: fixed; inset: 0; z-index: 500; background: var(--paper);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; text-align: center; padding: 24px;
+}
+.app-loader-paw { font-size: 3rem; animation: paw-bounce 1s ease-in-out infinite; }
+@keyframes paw-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+.app-loader p { margin: 0; font-family: var(--font-hand); font-size: 1.5rem; color: var(--forest); }
+.app-loader p.muted { font-family: var(--font-body); font-size: .85rem; }
+
 /* строка из двух полей */
 .field-row { display: flex; gap: 14px; flex-wrap: wrap; }
 .field-row > .field { flex: 1 1 140px; margin-bottom: 16px; }

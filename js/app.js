@@ -1,4 +1,6 @@
-// Общая логика: авторизация, шапка, роутинг. Хранилище — localStorage.
+// API + авторизация + шапка + роутинг. Данные хранятся на сервере (FastAPI + PostgreSQL).
+
+const API_BASE = "https://coolcatkit-api.onrender.com/api";
 
 const DEFAULT_AVATAR =
   "data:image/svg+xml;utf8," +
@@ -9,57 +11,65 @@ const DEFAULT_AVATAR =
      </svg>`
   );
 
-const Store = {
-  get(key, fallback) {
-    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
-    catch { return fallback; }
-  },
-  set(key, val) { localStorage.setItem(key, JSON.stringify(val)); },
+// ── токен ─────────────────────────────────────────────
+const Token = {
+  get() { return localStorage.getItem("cck_token"); },
+  set(t) { localStorage.setItem("cck_token", t); },
+  clear() { localStorage.removeItem("cck_token"); },
 };
 
+// ── базовый запрос к API ──────────────────────────────
+async function api(path, { method = "GET", body } = {}) {
+  const headers = {};
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  const t = Token.get();
+  if (t) headers["Authorization"] = "Bearer " + t;
+
+  const res = await fetch(API_BASE + path, {
+    method,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+
+  if (res.status === 204) return null;
+  let data = null;
+  try { data = await res.json(); } catch { /* пустой ответ */ }
+
+  if (!res.ok) {
+    let msg = "Ошибка " + res.status;
+    if (data && data.detail) {
+      msg = Array.isArray(data.detail) ? (data.detail[0]?.msg || msg) : data.detail;
+    }
+    const err = new Error(msg);
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+// ── авторизация ───────────────────────────────────────
 const Auth = {
-  users() { return Store.get("cck_users", {}); },
-  current() {
-    const email = Store.get("cck_session", null);
-    if (!email) return null;
-    return this.users()[email] || null;
+  _me: null,
+  async register({ name, email, password, catName, avatar }) {
+    const { token } = await api("/auth/register", {
+      method: "POST", body: { name, email, password, catName },
+    });
+    Token.set(token);
+    if (avatar && avatar !== DEFAULT_AVATAR) {
+      try { await api("/me", { method: "PATCH", body: { avatarUrl: avatar } }); } catch { /* не критично */ }
+    }
+    this._me = null;
   },
-  register({ name, email, password, catName, avatar }) {
-    email = email.trim().toLowerCase();
-    const users = this.users();
-    if (users[email]) throw new Error("Такой email уже зарегистрирован");
-    users[email] = { name, email, password, catName: catName || "Кот", avatar: avatar || DEFAULT_AVATAR };
-    Store.set("cck_users", users);
-    Store.set("cck_session", email);
-    return users[email];
+  async login(email, password) {
+    const { token } = await api("/auth/login", { method: "POST", body: { email, password } });
+    Token.set(token);
+    this._me = null;
   },
-  login(email, password) {
-    email = email.trim().toLowerCase();
-    const u = this.users()[email];
-    if (!u || u.password !== password) throw new Error("Неверный email или пароль");
-    Store.set("cck_session", email);
-    return u;
-  },
-  logout() { localStorage.removeItem("cck_session"); },
-  update(patch) {
-    const u = this.current(); if (!u) return null;
-    const users = this.users();
-    users[u.email] = { ...u, ...patch };
-    Store.set("cck_users", users);
-    return users[u.email];
-  },
+  logout() { Token.clear(); this._me = null; },
+  async loadMe() { this._me = await api("/me"); return this._me; },
+  current() { return this._me; },          // профиль из кэша (после loadMe)
+  async update(patch) { this._me = await api("/me", { method: "PATCH", body: patch }); return this._me; },
 };
-
-// ключ данных юзера, изолированный по email
-function userKey(suffix) {
-  const u = Auth.current();
-  return `cck_${suffix}_${u ? u.email : "anon"}`;
-}
-
-function requireAuth() {
-  if (!Auth.current()) { location.href = base() + "index.html"; return false; }
-  return true;
-}
 
 // относительный путь до корня (страницы лежат в /pages/)
 function base() {
@@ -72,28 +82,41 @@ function toast(msg) {
   t.textContent = msg;
   t.classList.add("show");
   clearTimeout(t._t);
-  t._t = setTimeout(() => t.classList.remove("show"), 2200);
+  t._t = setTimeout(() => t.classList.remove("show"), 2600);
 }
 
+// экран загрузки (важно для «холодного старта» бесплатного сервера)
+function showLoader() {
+  if (document.getElementById("appLoader")) return;
+  const l = document.createElement("div");
+  l.id = "appLoader";
+  l.className = "app-loader";
+  l.innerHTML = `
+    <div class="app-loader-paw">🐾</div>
+    <p>Загрузка…</p>
+    <p class="muted" style="font-size:.85rem;max-width:280px">первый вход после простоя сервера может занять до минуты</p>`;
+  document.body.appendChild(l);
+}
+function hideLoader() { document.getElementById("appLoader")?.remove(); }
+
 function buildTopbar({ back } = {}) {
-  const u = Auth.current();
+  const me = Auth.current();
+  const cat = me ? me.cat : null;
   const b = base();
-  // на самой странице входа кнопка "Войти" в углу не нужна — вход уже в карточке
-  const onAuthPage = document.body.dataset.page === "index";
   const bar = document.createElement("header");
   bar.className = "topbar";
   bar.innerHTML = `
     ${back ? `<a class="back-btn" href="#" data-back>← назад</a>` : ""}
-    <a class="brand" href="${b}${u ? "pages/home.html" : "index.html"}">
+    <a class="brand" href="${b}${me ? "pages/home.html" : "index.html"}">
       <span class="paw">🐾</span> Cool Cat Kit
     </a>
     <span class="spacer"></span>
     ${
-      u
+      me
         ? `<a class="me" href="${b}pages/profile.html" title="Профиль">
-             <img src="${u.avatar}" alt="avatar"><span class="hand" style="font-size:1.2rem">${u.catName}</span>
+             <img src="${cat.avatarUrl || DEFAULT_AVATAR}" alt="avatar"><span class="hand" style="font-size:1.2rem">${cat.name}</span>
            </a>`
-        : onAuthPage ? "" : `<a class="btn btn--sm" href="${b}index.html">Войти</a>`
+        : ""
     }`;
   document.body.prepend(bar);
 
@@ -109,19 +132,43 @@ function buildTopbar({ back } = {}) {
   }
 }
 
-// роутер: по data-page вызывает нужный инициализатор
-document.addEventListener("DOMContentLoaded", () => {
+// роутер: грузит профиль, гейтит доступ, вызывает инициализатор страницы
+document.addEventListener("DOMContentLoaded", async () => {
   const page = document.body.dataset.page;
-  const needsAuth = !["index"].includes(page);
-  if (needsAuth && !requireAuth()) return;
+  const onIndex = page === "index";
+
+  if (!onIndex) {
+    if (!Token.get()) { location.href = base() + "index.html"; return; }
+    showLoader();
+    try {
+      await Auth.loadMe();
+    } catch (e) {
+      hideLoader();
+      if (e.status === 401) { Auth.logout(); location.href = base() + "index.html"; return; }
+      toast("Сервер недоступен, обнови страницу позже");
+      return;
+    }
+    hideLoader();
+  } else if (Token.get()) {
+    // уже залогинен — пробуем сразу на главную
+    showLoader();
+    try { await Auth.loadMe(); location.href = "pages/home.html"; return; }
+    catch (e) { if (e.status === 401) Auth.logout(); }
+    hideLoader();
+  }
 
   buildTopbar({ back: page !== "index" && page !== "home" });
 
   const init = PAGES[page];
-  if (init) init();
+  if (init) {
+    try { await init(); }
+    catch (e) { console.error(e); toast(e.message || "Ошибка загрузки"); }
+  }
 
   initFaq();
 });
+
+const PAGES = {}; // инициализаторы страниц заполняются в pages.js
 
 // FAQ-аккордеон на странице входа: открыт только один пункт за раз
 function initFaq() {
@@ -129,7 +176,6 @@ function initFaq() {
 
   const close = (item) => {
     const a = item.querySelector(".faq-a");
-    // если высота была отпущена в none — вернуть px, чтобы анимировать к 0
     if (a.style.maxHeight === "none") { a.style.maxHeight = a.scrollHeight + "px"; void a.offsetHeight; }
     item.classList.remove("open");
     a.style.maxHeight = "0px";
@@ -137,10 +183,10 @@ function initFaq() {
   const open = (item) => {
     const a = item.querySelector(".faq-a");
     item.classList.add("open");
-    a.style.maxHeight = a.scrollHeight + "px"; // реальная высота ответа
+    a.style.maxHeight = a.scrollHeight + "px";
     a.addEventListener("transitionend", function te(e) {
       if (e.target !== a || e.propertyName !== "max-height") return;
-      if (item.classList.contains("open")) a.style.maxHeight = "none"; // ресайз-безопасно
+      if (item.classList.contains("open")) a.style.maxHeight = "none";
       a.removeEventListener("transitionend", te);
     });
   };
@@ -155,5 +201,3 @@ function initFaq() {
     });
   });
 }
-
-const PAGES = {}; // инициализаторы страниц заполняются в pages.js

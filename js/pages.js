@@ -1,8 +1,7 @@
-// Логика страниц. Функции кладутся в PAGES[имя] и вызываются роутером из app.js.
+// Логика страниц. Данные с сервера через api() (см. app.js). Инициализаторы в PAGES[имя].
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
-const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const fmtDate = (iso) => {
   if (!iso) return "";
   const [y, m, d] = iso.split("-");
@@ -17,7 +16,7 @@ function fileToDataURL(file) {
   });
 }
 
-// ── общие хелперы: даты, возраст, вес, паспорт ──────────────────────
+// ── даты / возраст / склонения ──────────────────────────────────────
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const isoToDate = (iso) => { const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d); };
 const dateToISO = (dt) =>
@@ -44,7 +43,6 @@ function ageText(birthIso) {
   if (m) parts.push(`${m} ${plural(m, "месяц", "месяца", "месяцев")}`);
   return parts.length ? parts.join(" ") : "меньше месяца";
 }
-// "через N дней" / "сегодня" / "N дней назад"
 function whenText(iso) {
   const d = daysUntil(iso);
   if (d === 0) return "сегодня";
@@ -54,64 +52,61 @@ function whenText(iso) {
   return `${-d} ${plural(-d, "день", "дня", "дней")} назад`;
 }
 
-// вес кота: список {id, date, kg}
-function getWeights() {
-  return Store.get(userKey("weights"), []).slice().sort((a, b) => a.date.localeCompare(b.date));
-}
-function latestWeight() { const w = getWeights(); return w.length ? w[w.length - 1] : null; }
-
-// паспорт питомца (хранится в аккаунте рядом с catName/avatar)
-const SEX_LABEL = { m: "♂ кот", f: "♀ кошка" };
-function catProfile() {
-  const u = Auth.current() || {};
-  return {
-    name: u.catName || "Кот",
-    avatar: u.avatar || (typeof DEFAULT_AVATAR !== "undefined" ? DEFAULT_AVATAR : ""),
-    breedId: u.catBreedId ?? null,
-    sex: u.catSex || "",
-    birthday: u.catBirthday || null,
-    chip: u.catChip || "",
-  };
-}
+// порода берётся из статического справочника (js/data.js) — там полные детали
 function breedName(id) {
   if (id == null || typeof BREEDS === "undefined") return "";
   const b = BREEDS.find((x) => x.id === id);
   return b ? b.name : "";
 }
+const SEX_LABEL = { m: "♂ кот", f: "♀ кошка" };
 
-// ближайшая по сроку прививка с повтором: {title, date} | null
-function nextVaccineDue() {
-  const notes = Store.get(userKey("notes"), []);
+// ── константы разделов ──────────────────────────────────────────────
+const KIND_LABEL = { vaccine: "💉 Прививка", med: "🩺 Медицина", note: "📝 Заметка" };
+const CAL_CATS = {
+  reminder: "🔔 Напоминание",
+  food:     "🍗 Корм",
+  vaccine:  "💉 Прививка",
+  walk:     "🐾 Прогулка",
+  grooming: "✂️ Груминг",
+  vet:      "🩺 Ветеринар",
+};
+const catIcon = (cat) => (CAL_CATS[cat] || CAL_CATS.reminder).split(" ")[0];
+
+// версия ассетов: бамп сбрасывает кэш браузера при замене картинок
+const ASSET_VER = "4";
+const BREED_FOCUS = {
+  2: "center 5%", 3: "center 8%", 9: "center 25%", 12: "center 14%", 13: "center 30%",
+};
+const focusFor = (id) => BREED_FOCUS[id] || "center 28%";
+
+// ── вычисления из загруженных данных ────────────────────────────────
+const latestWeightOf = (weights) => (weights.length ? weights[weights.length - 1] : null);
+
+function nextVaccineDueFrom(notes) {
   const due = notes
-    .filter((n) => n.kind === "vaccine" && n.date && n.repeatM)
-    .map((n) => ({ title: n.title, date: addMonths(n.date, n.repeatM) }))
+    .filter((n) => n.kind === "vaccine" && n.date && n.repeatMonths)
+    .map((n) => ({ title: n.title, date: addMonths(n.date, n.repeatMonths) }))
     .sort((a, b) => a.date.localeCompare(b.date));
   return due.find((x) => daysUntil(x.date) >= 0) || due[due.length - 1] || null;
 }
 
-// ближайшие события: календарь + датированные медзаметки + повторы прививок
-function upcomingEvents(limit = 4) {
+function upcomingEventsFrom(notes, reminders, limit = 4) {
   const out = [];
-  const cal = Store.get(userKey("cal"), {});
-  Object.entries(cal).forEach(([iso, arr]) =>
-    arr.forEach((r) => out.push({ date: iso, icon: catIcon(r.cat), label: r.title })));
-  const notes = Store.get(userKey("notes"), []);
+  reminders.forEach((r) => out.push({ date: r.date, icon: catIcon(r.category), label: r.title }));
   notes.filter((n) => n.date).forEach((n) =>
     out.push({ date: n.date, icon: KIND_LABEL[n.kind].split(" ")[0], label: n.title }));
-  notes.filter((n) => n.kind === "vaccine" && n.date && n.repeatM).forEach((n) =>
-    out.push({ date: addMonths(n.date, n.repeatM), icon: "🔁", label: `повтор: ${n.title}` }));
+  notes.filter((n) => n.kind === "vaccine" && n.date && n.repeatMonths).forEach((n) =>
+    out.push({ date: addMonths(n.date, n.repeatMonths), icon: "🔁", label: `повтор: ${n.title}` }));
   return out
     .filter((e) => daysUntil(e.date) >= 0)
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, limit);
 }
 
-// Вход / регистрация (index.html)
+// ── Вход / регистрация (index.html) ─────────────────────────────────
 PAGES.index = function () {
-  if (Auth.current()) { location.href = "pages/home.html"; return; }
-
   const mount = $("#authMount");
-  let mode = "login"; // login | register
+  let mode = "login";
   let avatarData = DEFAULT_AVATAR;
 
   function render() {
@@ -158,47 +153,53 @@ PAGES.index = function () {
       });
     }
 
-    $("#authForm").addEventListener("submit", (e) => {
+    $("#authForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
       const msg = $("#authMsg");
+      const btn = e.target.querySelector("button[type=submit]");
+      const label = btn.textContent;
+      btn.disabled = true; btn.textContent = "…";
+      msg.textContent = "";
       try {
         if (isReg) {
-          Auth.register({
+          await Auth.register({
             name: fd.get("name"), email: fd.get("email"), password: fd.get("password"),
             catName: fd.get("catName"), avatar: avatarData,
           });
         } else {
-          Auth.login(fd.get("email"), fd.get("password"));
+          await Auth.login(fd.get("email"), fd.get("password"));
         }
         location.href = "pages/home.html";
       } catch (err) {
         msg.textContent = err.message; msg.className = "form-msg err";
+        btn.disabled = false; btn.textContent = label;
       }
     });
   }
   render();
 };
 
-// Главная (home.html)
-PAGES.home = function () {
-  const u = Auth.current();
+// ── Главная + дашборд (home.html) ───────────────────────────────────
+PAGES.home = async function () {
+  const me = Auth.current();
   const g = $("#greeting");
-  if (g) g.innerHTML = `Привет, <span class="scribble">${u.name}</span>!`;
+  if (g) g.innerHTML = `Привет, <span class="scribble">${me.name}</span>!`;
   const sub = $("#catLine");
-  if (sub) sub.textContent = `Дневник кота по кличке ${u.catName}`;
+  if (sub) sub.textContent = `Дневник кота по кличке ${me.cat.name}`;
 
-  // ── дашборд: паспорт + прививки + ближайшие события ──
   const dash = $("#dashboard");
   if (dash) {
-    const cat = catProfile();
+    const [notes, reminders, weights] = await Promise.all([
+      api("/notes"), api("/reminders"), api("/weights"),
+    ]);
+    const cat = me.cat;
     const breed = breedName(cat.breedId);
     const age = ageText(cat.birthday);
-    const w = latestWeight();
-    const vac = nextVaccineDue();
+    const w = latestWeightOf(weights);
+    const vac = nextVaccineDueFrom(notes);
     const vacOverdue = vac && daysUntil(vac.date) < 0;
-    const events = upcomingEvents(4);
-    const filledPassport = breed || age || cat.sex || cat.chip;
+    const events = upcomingEventsFrom(notes, reminders, 4);
 
     const chips = [
       breed && `<span>🐈 ${breed}</span>`,
@@ -211,11 +212,11 @@ PAGES.home = function () {
       <section class="dash card card--tilt-r">
         <span class="tape"></span>
         <div class="dash-pet">
-          <img class="dash-ava" src="${cat.avatar}" alt="${escapeHtml(cat.name)}">
+          <img class="dash-ava" src="${cat.avatarUrl || DEFAULT_AVATAR}" alt="${escapeHtml(cat.name)}">
           <div class="dash-pet-info">
             <h2 class="hand">${escapeHtml(cat.name)}</h2>
             <div class="dash-meta">${chips || `<span class="muted">паспорт пока не заполнен</span>`}</div>
-            <a class="dash-edit" href="profile.html">✎ ${filledPassport ? "паспорт кота" : "заполнить паспорт"}</a>
+            <a class="dash-edit" href="profile.html">✎ паспорт кота</a>
           </div>
         </div>
         <div class="dash-cols">
@@ -244,13 +245,12 @@ PAGES.home = function () {
       </section>`;
   }
 
-  // сворачивание справочника — состояние запоминаем в localStorage
+  // сворачивание справочника — состояние интерфейса храним локально
   const group = $("#refGroup");
   const toggle = $("#refToggle");
   const wrap = group?.querySelector(".tiles-wrap");
   if (group && toggle && wrap) {
-    const KEY = userKey("ref_collapsed");
-
+    const KEY = "cck_ref_collapsed";
     const expand = (animate) => {
       group.classList.remove("collapsed");
       wrap.style.overflow = "hidden";
@@ -258,59 +258,34 @@ PAGES.home = function () {
         wrap.style.maxHeight = wrap.scrollHeight + "px";
         wrap.addEventListener("transitionend", function te(e) {
           if (e.target !== wrap || e.propertyName !== "max-height") return;
-          // отпускаем высоту, чтобы при ресайзе плитки не обрезались
-          wrap.style.maxHeight = "none";
-          wrap.style.overflow = "visible";
+          wrap.style.maxHeight = "none"; wrap.style.overflow = "visible";
           wrap.removeEventListener("transitionend", te);
         });
-      } else {
-        wrap.style.maxHeight = "none";
-        wrap.style.overflow = "visible";
-      }
+      } else { wrap.style.maxHeight = "none"; wrap.style.overflow = "visible"; }
     };
-
     const collapse = (animate) => {
       group.classList.add("collapsed");
       wrap.style.overflow = "hidden";
-      if (animate) {
-        wrap.style.maxHeight = wrap.scrollHeight + "px"; // от текущей высоты
-        void wrap.offsetHeight;                          // форсируем reflow
-        wrap.style.maxHeight = "0px";
-      } else {
-        wrap.style.maxHeight = "0px";
-      }
+      if (animate) { wrap.style.maxHeight = wrap.scrollHeight + "px"; void wrap.offsetHeight; wrap.style.maxHeight = "0px"; }
+      else { wrap.style.maxHeight = "0px"; }
     };
-
     const setLabel = (collapsed) => {
       toggle.setAttribute("aria-expanded", String(!collapsed));
       toggle.textContent = collapsed ? "развернуть ▼" : "свернуть ▲";
     };
-
-    let collapsed = Store.get(KEY, false);
-    (collapsed ? collapse : expand)(false); // на загрузке без анимации
+    let collapsed = localStorage.getItem(KEY) === "1";
+    (collapsed ? collapse : expand)(false);
     setLabel(collapsed);
-
     toggle.addEventListener("click", () => {
       collapsed = !collapsed;
-      Store.set(KEY, collapsed);
+      localStorage.setItem(KEY, collapsed ? "1" : "0");
       (collapsed ? collapse : expand)(true);
       setLabel(collapsed);
     });
   }
 };
 
-// Породы: сетка карточек + модалка с деталями (breeds.html)
-// версия ассетов: бамп сбрасывает кэш браузера, когда меняем картинки под теми же именами
-const ASSET_VER = "4";
-// точка кадрирования фото в мини-карточке для каждой породы (id из data.js); легко подкрутить
-const BREED_FOCUS = {
-  2: "center 5%",    // рэгдолл — уши высоко, кадрируем ближе к верху
-  3: "center 8%",    // британская короткошёрстная — показать уши
-  9: "center 25%",   // абиссинская
-  12: "center 14%",  // ориентальная (большие уши вверху)
-  13: "center 30%",  // девон-рекс
-};
-const focusFor = (id) => BREED_FOCUS[id] || "center 28%";
+// ── Породы (breeds.html) — статический справочник, без API ──────────
 PAGES.breeds = function () {
   const grid = $("#breedGrid");
   const search = $("#breedSearch");
@@ -365,29 +340,12 @@ PAGES.breeds = function () {
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
 };
 
-// Медицина / прививки — заметки (medical.html)
-const KIND_LABEL = { vaccine: "💉 Прививка", med: "🩺 Медицина", note: "📝 Заметка" };
-
-// Категории событий календаря
-const CAL_CATS = {
-  reminder: "🔔 Напоминание",
-  food:     "🍗 Корм",
-  vaccine:  "💉 Прививка",
-  walk:     "🐾 Прогулка",
-  grooming: "✂️ Груминг",
-  vet:      "🩺 Ветеринар",
-};
-const catIcon = (cat) => (CAL_CATS[cat] || CAL_CATS.reminder).split(" ")[0];
-
-PAGES.medical = function () {
+// ── Медицина / прививки (medical.html) ──────────────────────────────
+PAGES.medical = async function () {
   const listEl = $("#notesList");
-  const KEY = userKey("notes");
-  let notes = Store.get(KEY, []);
+  let notes = await api("/notes");
   let filter = "all";
 
-  function save() { Store.set(KEY, notes); }
-
-  // показываем «Повтор» только для прививок
   const form = $("#noteForm");
   const repeatField = $("#repeatField");
   const syncRepeat = () => { repeatField.style.display = form.kind.value === "vaccine" ? "" : "none"; };
@@ -403,7 +361,7 @@ PAGES.medical = function () {
     listEl.innerHTML = shown
       .slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""))
       .map((n) => {
-        const due = n.kind === "vaccine" && n.date && n.repeatM ? addMonths(n.date, n.repeatM) : null;
+        const due = n.kind === "vaccine" && n.date && n.repeatMonths ? addMonths(n.date, n.repeatMonths) : null;
         const dueOverdue = due && daysUntil(due) < 0;
         return `
       <article class="note kind-${n.kind}" data-id="${n.id}">
@@ -420,7 +378,6 @@ PAGES.medical = function () {
       }).join("");
   }
 
-  // фильтр-чипы
   $("#noteFilters").addEventListener("click", (e) => {
     const chip = e.target.closest(".chip"); if (!chip) return;
     filter = chip.dataset.filter;
@@ -428,30 +385,34 @@ PAGES.medical = function () {
     render();
   });
 
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    const date = fd.get("date");
     const kind = fd.get("kind");
-    notes.push({
-      id: uid(), kind, title: fd.get("title").trim(),
-      body: fd.get("body").trim(), date: date || null,
-      repeatM: kind === "vaccine" ? Number(fd.get("repeatM")) || 0 : 0,
-    });
-    save(); render(); e.target.reset(); syncRepeat();
+    await api("/notes", { method: "POST", body: {
+      kind, title: fd.get("title").trim(), body: fd.get("body").trim(),
+      date: fd.get("date") || null,
+      repeatMonths: kind === "vaccine" ? Number(fd.get("repeatM")) || 0 : 0,
+    }});
+    notes = await api("/notes");
+    render(); e.target.reset(); syncRepeat();
     toast("Заметка сохранена");
   });
 
-  listEl.addEventListener("click", (e) => {
+  listEl.addEventListener("click", async (e) => {
     const art = e.target.closest(".note"); if (!art) return;
-    const id = art.dataset.id;
+    const id = +art.dataset.id;
     const n = notes.find((x) => x.id === id);
     if (e.target.closest("[data-del]")) {
-      notes = notes.filter((x) => x.id !== id); save(); render();
+      await api(`/notes/${id}`, { method: "DELETE" });
+      notes = await api("/notes"); render();
     } else if (e.target.closest("[data-cal]")) {
-      const d = prompt("Дата для календаря (ГГГГ-ММ-ДД):", n.date || new Date().toISOString().slice(0, 10));
+      const d = prompt("Дата для календаря (ГГГГ-ММ-ДД):", n.date || todayISO());
       if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
-        n.date = d; save(); render();
+        await api(`/notes/${id}`, { method: "PATCH", body: {
+          kind: n.kind, title: n.title, body: n.body, date: d, repeatMonths: n.repeatMonths || 0,
+        }});
+        notes = await api("/notes"); render();
         toast("Привязано к календарю");
       } else if (d !== null) {
         toast("Формат: 2026-06-16");
@@ -462,51 +423,53 @@ PAGES.medical = function () {
   render();
 };
 
-// Календарь: месяц + напоминания по дням (calendar.html)
-PAGES.calendar = function () {
+// ── Календарь (calendar.html) ───────────────────────────────────────
+PAGES.calendar = async function () {
   const grid = $("#calGrid");
   const title = $("#calTitle");
-  const CAL_KEY = userKey("cal");      // напоминания, созданные в календаре
-  const NOTES_KEY = userKey("notes");  // медзаметки с привязанной датой
+  let reminders = await api("/reminders");
+  let notes = await api("/notes");
 
-  let cal = Store.get(CAL_KEY, {});    // { "2026-06-16": [{id,title}] }
   const cur = new Date(); cur.setDate(1);
   const MONTHS = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
   const DOW = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
 
-  function saveCal() { Store.set(CAL_KEY, cal); }
-  function notesByDate() {
-    const notes = Store.get(NOTES_KEY, []);
+  const remindersByDate = () => {
+    const map = {};
+    reminders.forEach((r) => { (map[r.date] ||= []).push(r); });
+    return map;
+  };
+  const notesByDate = () => {
     const map = {};
     notes.filter((n) => n.date).forEach((n) => { (map[n.date] ||= []).push(n); });
-    // повторные прививки показываем и на дату следующего раза
-    notes.filter((n) => n.kind === "vaccine" && n.date && n.repeatM).forEach((n) => {
-      const due = addMonths(n.date, n.repeatM);
+    notes.filter((n) => n.kind === "vaccine" && n.date && n.repeatMonths).forEach((n) => {
+      const due = addMonths(n.date, n.repeatMonths);
       (map[due] ||= []).push({ kind: "vaccine", title: `🔁 повтор: ${n.title}` });
     });
     return map;
-  }
+  };
 
   function render() {
     const y = cur.getFullYear(), m = cur.getMonth();
     title.textContent = `${MONTHS[m]} ${y}`;
     const first = new Date(y, m, 1);
-    const startOffset = (first.getDay() + 6) % 7; // понедельник = 0
+    const startOffset = (first.getDay() + 6) % 7;
     const daysIn = new Date(y, m + 1, 0).getDate();
-    const todayIso = new Date().toISOString().slice(0, 10);
+    const todayIso = todayISO();
+    const rmap = remindersByDate();
     const nmap = notesByDate();
 
     let html = DOW.map((d) => `<div class="cal-dow">${d}</div>`).join("");
     for (let i = 0; i < startOffset; i++) html += `<div class="cal-cell empty-cell"></div>`;
     for (let day = 1; day <= daysIn; day++) {
       const iso = `${y}-${String(m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      const reminders = cal[iso] || [];
+      const rem = rmap[iso] || [];
       const meds = nmap[iso] || [];
       const dots = [
         ...meds.map((n) => `<span class="dot ${n.kind}"></span>`),
-        ...reminders.map(() => `<span class="dot"></span>`),
+        ...rem.map(() => `<span class="dot"></span>`),
       ].slice(0, 5).join("");
-      const firstLabel = (meds[0]?.title || reminders[0]?.title || "");
+      const firstLabel = (meds[0]?.title || rem[0]?.title || "");
       html += `
         <div class="cal-cell ${iso === todayIso ? "today" : ""}" data-iso="${iso}">
           <div class="num">${day}</div>
@@ -518,7 +481,7 @@ PAGES.calendar = function () {
   }
 
   function openDay(iso) {
-    const reminders = cal[iso] || [];
+    const rem = remindersByDate()[iso] || [];
     const meds = (notesByDate()[iso] || []);
     showModal(`
       <button class="close" data-close>&times;</button>
@@ -531,9 +494,9 @@ PAGES.calendar = function () {
       }
       <div class="block"><h3 style="color:var(--teal)">События дня</h3>
         <div id="dayReminders">${
-          reminders.length
-            ? reminders.map((r) => `<div class="row reminder-row" data-id="${r.id}">
-                <span>${catIcon(r.cat)} ${escapeHtml(r.title)}</span>
+          rem.length
+            ? rem.map((r) => `<div class="row reminder-row" data-id="${r.id}">
+                <span>${catIcon(r.category)} ${escapeHtml(r.title)}</span>
                 <button class="del" data-del title="Удалить">🗑</button></div>`).join("")
             : `<p class="muted">Пока ничего.</p>`
         }</div>
@@ -551,20 +514,21 @@ PAGES.calendar = function () {
         <button class="btn btn--block" type="submit" style="margin-top:20px">+ Добавить</button>
       </form>`);
 
-    $("#reminderForm").addEventListener("submit", (e) => {
+    $("#reminderForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
       const t = fd.get("title").trim();
       if (!t) return;
-      (cal[iso] ||= []).push({ id: uid(), title: t, cat: fd.get("cat") });
-      saveCal(); render(); openDay(iso); toast("Событие добавлено");
+      await api("/reminders", { method: "POST", body: { date: iso, title: t, category: fd.get("cat") } });
+      reminders = await api("/reminders");
+      render(); openDay(iso); toast("Событие добавлено");
     });
-    $("#dayReminders").addEventListener("click", (e) => {
+    $("#dayReminders").addEventListener("click", async (e) => {
       const row = e.target.closest("[data-id]");
       if (row && e.target.closest("[data-del]")) {
-        cal[iso] = (cal[iso] || []).filter((r) => r.id !== row.dataset.id);
-        if (!cal[iso].length) delete cal[iso];
-        saveCal(); render(); openDay(iso);
+        await api(`/reminders/${row.dataset.id}`, { method: "DELETE" });
+        reminders = await api("/reminders");
+        render(); openDay(iso);
       }
     });
   }
@@ -579,89 +543,30 @@ PAGES.calendar = function () {
   render();
 };
 
-// История кота — лента постов (history.html)
-PAGES.history = function () {
-  const feed = $("#feed");
-  const KEY = userKey("posts");
-  let posts = Store.get(KEY, []);
-  let imgData = null;
-
-  function save() { Store.set(KEY, posts); }
-
-  function render() {
-    if (!posts.length) {
-      feed.innerHTML = `<p class="empty">История пока чистая. Добавь первый момент из жизни кота ✏️</p>`;
-      return;
-    }
-    feed.innerHTML = posts
-      .slice().reverse()
-      .map(
-        (p) => `
-      <article class="post" data-id="${p.id}">
-        <button class="del" data-del title="Удалить">🗑</button>
-        ${p.img ? `<img src="${p.img}" alt="фото" loading="lazy">` : ""}
-        <div class="meta">${fmtDate(p.date)}</div>
-        <div class="text">${escapeHtml(p.text)}</div>
-      </article>`
-      ).join("");
-  }
-
-  const fileInput = $("#postImg");
-  fileInput.addEventListener("change", async (e) => {
-    const f = e.target.files[0];
-    imgData = f ? await fileToDataURL(f) : null;
-    $("#postImgName").textContent = f ? f.name : "";
-  });
-
-  $("#postForm").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const text = new FormData(e.target).get("text").trim();
-    if (!text && !imgData) { toast("Добавь текст или фото"); return; }
-    posts.push({ id: uid(), text, img: imgData, date: new Date().toISOString().slice(0, 10) });
-    save(); render();
-    e.target.reset(); imgData = null; $("#postImgName").textContent = "";
-    toast("Добавлено в историю");
-  });
-
-  feed.addEventListener("click", (e) => {
-    const art = e.target.closest(".post");
-    if (art && e.target.closest("[data-del]")) {
-      posts = posts.filter((p) => p.id !== art.dataset.id); save(); render();
-    }
-  });
-
-  render();
-};
-
-// Калькулятор суточной нормы корма (food.html)
-PAGES.food = function () {
+// ── Калькулятор корма (food.html) ───────────────────────────────────
+PAGES.food = async function () {
   const form = $("#foodForm");
   const out = $("#foodOut");
 
-  // подставим последний известный вес
-  const w = latestWeight();
+  const weights = await api("/weights");
+  const w = latestWeightOf(weights);
   if (w) form.kg.value = w.kg;
 
   function calc() {
     const kg = parseFloat(form.kg.value);
     if (!(kg > 0)) { out.innerHTML = `<p class="form-msg err">Укажи вес кота</p>`; return; }
-
     const stage = form.stage.value;
     const activity = form.activity.value;
     const neutered = form.neutered.value === "yes";
     const kcal100 = parseFloat(form.kcal.value) || 360;
 
     const RER = 70 * Math.pow(kg, 0.75);
-
-    // коэффициент суточной энергии (DER)
     let factor;
-    if (stage === "kitten") {
-      factor = 2.5;                                   // рост
-    } else {
+    if (stage === "kitten") factor = 2.5;
+    else {
       factor = stage === "senior" ? (neutered ? 1.1 : 1.2) : (neutered ? 1.2 : 1.4);
       factor *= activity === "low" ? 0.9 : activity === "high" ? 1.15 : 1;
     }
-
     const der = Math.round(RER * factor);
     const grams = Math.round((der * 100) / kcal100);
     const perMeal = Math.round(grams / 2);
@@ -681,50 +586,43 @@ PAGES.food = function () {
   }
 
   form.addEventListener("submit", (e) => { e.preventDefault(); calc(); });
-  if (w) calc();   // если вес известен — сразу показываем расчёт
+  if (w) calc();
 };
 
-// Трекер веса с графиком на canvas (weight.html)
-PAGES.weight = function () {
-  const KEY = userKey("weights");
+// ── Трекер веса с графиком (weight.html) ────────────────────────────
+PAGES.weight = async function () {
   const listEl = $("#weightList");
   const statsEl = $("#weightStats");
   const canvas = $("#weightChart");
-
   const form = $("#weightForm");
   form.date.value = todayISO();
 
-  const load = () => Store.get(KEY, []).slice().sort((a, b) => a.date.localeCompare(b.date));
-  const save = (arr) => Store.set(KEY, arr);
+  let weights = await api("/weights");
 
   function render() {
-    const data = load();
-
-    // статистика
-    if (data.length) {
-      const cur = data[data.length - 1];
-      const first = data[0];
+    if (weights.length) {
+      const cur = weights[weights.length - 1];
+      const first = weights[0];
       const diff = +(cur.kg - first.kg).toFixed(2);
-      const kgs = data.map((d) => d.kg);
+      const kgs = weights.map((d) => d.kg);
       const min = Math.min(...kgs), max = Math.max(...kgs);
       const trend = diff > 0 ? `▲ +${diff}` : diff < 0 ? `▼ ${diff}` : "= 0";
       const trendCls = diff > 0 ? "up" : diff < 0 ? "down" : "flat";
       statsEl.innerHTML = `
         <span class="ws-cur"><b>${cur.kg}</b> кг</span>
         <span class="ws-trend ${trendCls}">${trend} кг</span>
-        <span class="muted">мин ${min} · макс ${max} · ${data.length} ${plural(data.length, "запись", "записи", "записей")}</span>`;
+        <span class="muted">мин ${min} · макс ${max} · ${weights.length} ${plural(weights.length, "запись", "записи", "записей")}</span>`;
     } else {
       statsEl.innerHTML = `<span class="muted">пока нет измерений</span>`;
     }
 
-    drawWeightChart(canvas, data);
+    drawWeightChart(canvas, weights);
 
-    // список
-    if (!data.length) {
+    if (!weights.length) {
       listEl.innerHTML = `<p class="empty">Добавь первое измерение веса ⚖️</p>`;
       return;
     }
-    listEl.innerHTML = data
+    listEl.innerHTML = weights
       .slice().reverse()
       .map((d, i, arr) => {
         const prev = arr[i + 1];
@@ -741,42 +639,36 @@ PAGES.weight = function () {
       }).join("");
   }
 
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const date = form.date.value;
     const kg = +parseFloat(form.kg.value).toFixed(2);
     if (!date || !(kg > 0)) return;
-    let data = load();
-    const existing = data.find((d) => d.date === date);
-    if (existing) existing.kg = kg;                       // одно измерение в день
-    else data.push({ id: uid(), date, kg });
-    save(data); render();
-    form.kg.value = "";
-    toast(existing ? "Вес за этот день обновлён" : "Вес записан");
+    await api("/weights", { method: "POST", body: { date, kg } });
+    weights = await api("/weights");
+    render(); form.kg.value = "";
+    toast("Вес записан");
   });
 
-  listEl.addEventListener("click", (e) => {
+  listEl.addEventListener("click", async (e) => {
     const row = e.target.closest(".wl-row");
     if (row && e.target.closest("[data-del]")) {
-      save(load().filter((d) => d.id !== row.dataset.id));
-      render();
+      await api(`/weights/${row.dataset.id}`, { method: "DELETE" });
+      weights = await api("/weights"); render();
     }
   });
 
-  window.addEventListener("resize", () => drawWeightChart(canvas, load()));
+  window.addEventListener("resize", () => drawWeightChart(canvas, weights));
   render();
 };
 
-// рисуем линейный график веса на canvas (с учётом плотности пикселей)
 function drawWeightChart(canvas, data) {
   const wrap = canvas.parentElement;
   const cssW = wrap.clientWidth;
   const cssH = 240;
   const dpr = window.devicePixelRatio || 1;
-  canvas.width = cssW * dpr;
-  canvas.height = cssH * dpr;
-  canvas.style.width = cssW + "px";
-  canvas.style.height = cssH + "px";
+  canvas.width = cssW * dpr; canvas.height = cssH * dpr;
+  canvas.style.width = cssW + "px"; canvas.style.height = cssH + "px";
   const ctx = canvas.getContext("2d");
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, cssW, cssH);
@@ -786,12 +678,10 @@ function drawWeightChart(canvas, data) {
   const colInk = css("--ink-soft") || "#5b6452";
   const colSage = css("--sage-700") || "#5a7d52";
   const colTeal = css("--teal") || "#4d6b73";
-
   ctx.font = "12px Nunito, sans-serif";
 
   if (!data.length) {
-    ctx.fillStyle = colInk;
-    ctx.textAlign = "center";
+    ctx.fillStyle = colInk; ctx.textAlign = "center";
     ctx.fillText("Нет данных — добавь измерение веса", cssW / 2, cssH / 2);
     return;
   }
@@ -799,7 +689,6 @@ function drawWeightChart(canvas, data) {
   const padL = 40, padR = 16, padT = 16, padB = 28;
   const plotW = cssW - padL - padR;
   const plotH = cssH - padT - padB;
-
   const kgs = data.map((d) => d.kg);
   let minK = Math.min(...kgs), maxK = Math.max(...kgs);
   if (minK === maxK) { minK -= 0.5; maxK += 0.5; }
@@ -809,58 +698,95 @@ function drawWeightChart(canvas, data) {
   const x = (i) => padL + (data.length === 1 ? plotW / 2 : (plotW * i) / (data.length - 1));
   const y = (kg) => padT + plotH - ((kg - minK) / (maxK - minK)) * plotH;
 
-  // горизонтальная сетка + подписи кг
-  ctx.strokeStyle = colLine;
-  ctx.fillStyle = colInk;
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = colLine; ctx.fillStyle = colInk; ctx.lineWidth = 1;
   const ticks = 4;
   for (let t = 0; t <= ticks; t++) {
     const kg = minK + ((maxK - minK) * t) / ticks;
     const yy = y(kg);
-    ctx.beginPath();
-    ctx.moveTo(padL, yy); ctx.lineTo(cssW - padR, yy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(cssW - padR, yy); ctx.stroke();
     ctx.textAlign = "right"; ctx.textBaseline = "middle";
     ctx.fillText(kg.toFixed(1), padL - 6, yy);
   }
 
-  // линия
-  ctx.strokeStyle = colSage;
-  ctx.lineWidth = 2.5;
-  ctx.lineJoin = "round";
+  ctx.strokeStyle = colSage; ctx.lineWidth = 2.5; ctx.lineJoin = "round";
   ctx.beginPath();
   data.forEach((d, i) => { const px = x(i), py = y(d.kg); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
   ctx.stroke();
-
-  // заливка под линией
   ctx.lineTo(x(data.length - 1), padT + plotH);
   ctx.lineTo(x(0), padT + plotH);
   ctx.closePath();
-  ctx.fillStyle = "rgba(134,169,111,.14)";
-  ctx.fill();
+  ctx.fillStyle = "rgba(134,169,111,.14)"; ctx.fill();
 
-  // точки + подписи дат (прореживаем, чтобы не слипались)
   const step = Math.ceil(data.length / 6);
   data.forEach((d, i) => {
     const px = x(i), py = y(d.kg);
-    ctx.beginPath();
-    ctx.arc(px, py, 4, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2);
     ctx.fillStyle = colTeal; ctx.fill();
     ctx.lineWidth = 2; ctx.strokeStyle = "#fffdf6"; ctx.stroke();
     if (i % step === 0 || i === data.length - 1) {
       ctx.fillStyle = colInk; ctx.textAlign = "center"; ctx.textBaseline = "top";
-      const [y_, m_, d_] = d.date.split("-");
-      ctx.fillText(`${d_}.${m_}`, px, padT + plotH + 8);
+      const [, mm, dd] = d.date.split("-");
+      ctx.fillText(`${dd}.${mm}`, px, padT + plotH + 8);
     }
   });
 }
 
-// Профиль + паспорт кота (profile.html)
-PAGES.profile = function () {
-  const u = Auth.current();
-  const cat = catProfile();
-  let avatarData = u.avatar;
+// ── История кота (history.html) ─────────────────────────────────────
+PAGES.history = async function () {
+  const feed = $("#feed");
+  let posts = await api("/posts");
+  let imgData = null;
 
-  // селект пород
+  function render() {
+    if (!posts.length) {
+      feed.innerHTML = `<p class="empty">История пока чистая. Добавь первый момент из жизни кота ✏️</p>`;
+      return;
+    }
+    feed.innerHTML = posts
+      .map((p) => `
+      <article class="post" data-id="${p.id}">
+        <button class="del" data-del title="Удалить">🗑</button>
+        ${p.imageUrl ? `<img src="${p.imageUrl}" alt="фото" loading="lazy">` : ""}
+        <div class="meta">${fmtDate(p.date)}</div>
+        <div class="text">${escapeHtml(p.text)}</div>
+      </article>`).join("");
+  }
+
+  const fileInput = $("#postImg");
+  fileInput.addEventListener("change", async (e) => {
+    const f = e.target.files[0];
+    imgData = f ? await fileToDataURL(f) : null;
+    $("#postImgName").textContent = f ? f.name : "";
+  });
+
+  $("#postForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const text = new FormData(e.target).get("text").trim();
+    if (!text && !imgData) { toast("Добавь текст или фото"); return; }
+    await api("/posts", { method: "POST", body: { text, imageUrl: imgData, date: todayISO() } });
+    posts = await api("/posts");
+    render();
+    e.target.reset(); imgData = null; $("#postImgName").textContent = "";
+    toast("Добавлено в историю");
+  });
+
+  feed.addEventListener("click", async (e) => {
+    const art = e.target.closest(".post");
+    if (art && e.target.closest("[data-del]")) {
+      await api(`/posts/${art.dataset.id}`, { method: "DELETE" });
+      posts = await api("/posts"); render();
+    }
+  });
+
+  render();
+};
+
+// ── Профиль + паспорт кота (profile.html) ───────────────────────────
+PAGES.profile = async function () {
+  const me = Auth.current();
+  const cat = me.cat;
+  let avatarData = cat.avatarUrl || DEFAULT_AVATAR;
+
   const breedSel = $("#pf-breed");
   breedSel.innerHTML =
     `<option value="">— не указана —</option>` +
@@ -868,26 +794,23 @@ PAGES.profile = function () {
       ? BREEDS.map((b) => `<option value="${b.id}">${b.name}</option>`).join("")
       : "");
 
-  // заполняем форму
   $("#avPreview").src = avatarData;
-  $("#pf-name").value = u.name;
-  $("#pf-email").value = u.email;
-  $("#pf-cat").value = u.catName || "";
+  $("#pf-name").value = me.name;
+  $("#pf-email").value = me.email;
+  $("#pf-cat").value = cat.name || "";
   breedSel.value = cat.breedId != null ? String(cat.breedId) : "";
-  $("#pf-sex").value = cat.sex;
+  $("#pf-sex").value = cat.sex || "";
   $("#pf-birth").value = cat.birthday || "";
-  $("#pf-chip").value = cat.chip;
+  $("#pf-chip").value = cat.chip || "";
 
-  const w = latestWeight();
+  const weights = await api("/weights");
+  const w = latestWeightOf(weights);
   $("#pf-weight").innerHTML = w
     ? `<b>${w.kg} кг</b> <span class="muted">· ${fmtDate(w.date)}</span>`
     : `<span class="muted">не указан</span>`;
 
   const ageEl = $("#pf-age");
-  const showAge = () => {
-    const a = ageText($("#pf-birth").value || null);
-    ageEl.textContent = a ? `· ${a}` : "";
-  };
+  const showAge = () => { const a = ageText($("#pf-birth").value || null); ageEl.textContent = a ? `· ${a}` : ""; };
   showAge();
   $("#pf-birth").addEventListener("change", showAge);
 
@@ -897,20 +820,26 @@ PAGES.profile = function () {
     $("#avPreview").src = avatarData;
   });
 
-  $("#profileForm").addEventListener("submit", (e) => {
+  $("#profileForm").addEventListener("submit", async (e) => {
     e.preventDefault();
+    const btn = e.target.querySelector("button[type=submit]");
+    btn.disabled = true;
     const breedVal = breedSel.value;
-    Auth.update({
-      name: $("#pf-name").value.trim(),
-      catName: $("#pf-cat").value.trim() || "Кот",
-      avatar: avatarData,
-      catBreedId: breedVal ? Number(breedVal) : null,
-      catSex: $("#pf-sex").value,
-      catBirthday: $("#pf-birth").value || null,
-      catChip: $("#pf-chip").value.trim(),
-    });
-    toast("Паспорт сохранён");
-    setTimeout(() => location.reload(), 700);
+    try {
+      await Auth.update({
+        name: $("#pf-name").value.trim(),
+        catName: $("#pf-cat").value.trim() || "Кот",
+        avatarUrl: avatarData,
+        breedId: breedVal ? Number(breedVal) : null,
+        sex: $("#pf-sex").value || null,
+        birthday: $("#pf-birth").value || null,
+        chip: $("#pf-chip").value.trim(),
+      });
+      toast("Паспорт сохранён");
+      setTimeout(() => location.reload(), 700);
+    } catch (err) {
+      toast(err.message); btn.disabled = false;
+    }
   });
 
   $("#logoutBtn").addEventListener("click", () => {
@@ -926,7 +855,7 @@ function escapeHtml(s) {
   );
 }
 
-/* модалка общего назначения (для календаря) */
+/* модалка общего назначения (календарь) */
 function showModal(innerHtml) {
   let backdrop = $("#genericModal");
   if (!backdrop) {

@@ -20,9 +20,9 @@ services:
         value: "10080"
       - key: AUTO_INIT_DB
         value: "1"
-      # origin фронта на GitHub Pages (без пути /COOL-CAT-KIT/ — CORS его не учитывает)
+      # origin'ы фронта: GitHub Pages + локальный предпросмотр (без пути — CORS его не учитывает)
       - key: CORS_ORIGINS
-        value: https://super-rpogers-123.github.io
+        value: https://super-rpogers-123.github.io,http://localhost:8000,http://127.0.0.1:8000
 
 databases:
   - name: coolcatkit-db
